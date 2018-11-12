@@ -1,0 +1,10 @@
+/config/databases.yml
+/config/propel.ini
+/cache/*
+/log/*
+!/cache/.gitkeep
+!/log/.gitkeep
+/web/css
+/web/images
+/apps/backend/config/pm_pdf_kit.yml
+/apps/backend/config/pdf_configs.yml

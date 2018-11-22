@@ -17,8 +17,8 @@ class BaseTeacherForm extends BaseFormPropel
       'salary'                                     => new sfWidgetFormInput(),
       'aging_institution'                          => new sfWidgetFormDate(),
       'file_number'                                => new sfWidgetFormInput(),
-      'examination_repproved_subject_teacher_list' => new sfWidgetFormPropelChoiceMany(array('model' => 'ExaminationRepprovedSubject')),
       'examination_subject_teacher_list'           => new sfWidgetFormPropelChoiceMany(array('model' => 'ExaminationSubject')),
+      'examination_repproved_subject_teacher_list' => new sfWidgetFormPropelChoiceMany(array('model' => 'ExaminationRepprovedSubject')),
     ));
 
     $this->setValidators(array(
@@ -27,8 +27,8 @@ class BaseTeacherForm extends BaseFormPropel
       'salary'                                     => new sfValidatorNumber(array('required' => false)),
       'aging_institution'                          => new sfValidatorDate(array('required' => false)),
       'file_number'                                => new sfValidatorInteger(array('required' => false)),
-      'examination_repproved_subject_teacher_list' => new sfValidatorPropelChoiceMany(array('model' => 'ExaminationRepprovedSubject', 'required' => false)),
       'examination_subject_teacher_list'           => new sfValidatorPropelChoiceMany(array('model' => 'ExaminationSubject', 'required' => false)),
+      'examination_repproved_subject_teacher_list' => new sfValidatorPropelChoiceMany(array('model' => 'ExaminationRepprovedSubject', 'required' => false)),
     ));
 
     $this->widgetSchema->setNameFormat('teacher[%s]');
@@ -48,17 +48,6 @@ class BaseTeacherForm extends BaseFormPropel
   {
     parent::updateDefaultsFromObject();
 
-    if (isset($this->widgetSchema['examination_repproved_subject_teacher_list']))
-    {
-      $values = array();
-      foreach ($this->object->getExaminationRepprovedSubjectTeachers() as $obj)
-      {
-        $values[] = $obj->getExaminationRepprovedSubjectId();
-      }
-
-      $this->setDefault('examination_repproved_subject_teacher_list', $values);
-    }
-
     if (isset($this->widgetSchema['examination_subject_teacher_list']))
     {
       $values = array();
@@ -70,49 +59,25 @@ class BaseTeacherForm extends BaseFormPropel
       $this->setDefault('examination_subject_teacher_list', $values);
     }
 
+    if (isset($this->widgetSchema['examination_repproved_subject_teacher_list']))
+    {
+      $values = array();
+      foreach ($this->object->getExaminationRepprovedSubjectTeachers() as $obj)
+      {
+        $values[] = $obj->getExaminationRepprovedSubjectId();
+      }
+
+      $this->setDefault('examination_repproved_subject_teacher_list', $values);
+    }
+
   }
 
   protected function doSave($con = null)
   {
     parent::doSave($con);
 
-    $this->saveExaminationRepprovedSubjectTeacherList($con);
     $this->saveExaminationSubjectTeacherList($con);
-  }
-
-  public function saveExaminationRepprovedSubjectTeacherList($con = null)
-  {
-    if (!$this->isValid())
-    {
-      throw $this->getErrorSchema();
-    }
-
-    if (!isset($this->widgetSchema['examination_repproved_subject_teacher_list']))
-    {
-      // somebody has unset this widget
-      return;
-    }
-
-    if (is_null($con))
-    {
-      $con = $this->getConnection();
-    }
-
-    $c = new Criteria();
-    $c->add(ExaminationRepprovedSubjectTeacherPeer::TEACHER_ID, $this->object->getPrimaryKey());
-    ExaminationRepprovedSubjectTeacherPeer::doDelete($c, $con);
-
-    $values = $this->getValue('examination_repproved_subject_teacher_list');
-    if (is_array($values))
-    {
-      foreach ($values as $value)
-      {
-        $obj = new ExaminationRepprovedSubjectTeacher();
-        $obj->setTeacherId($this->object->getPrimaryKey());
-        $obj->setExaminationRepprovedSubjectId($value);
-        $obj->save();
-      }
-    }
+    $this->saveExaminationRepprovedSubjectTeacherList($con);
   }
 
   public function saveExaminationSubjectTeacherList($con = null)
@@ -145,6 +110,41 @@ class BaseTeacherForm extends BaseFormPropel
         $obj = new ExaminationSubjectTeacher();
         $obj->setTeacherId($this->object->getPrimaryKey());
         $obj->setExaminationSubjectId($value);
+        $obj->save();
+      }
+    }
+  }
+
+  public function saveExaminationRepprovedSubjectTeacherList($con = null)
+  {
+    if (!$this->isValid())
+    {
+      throw $this->getErrorSchema();
+    }
+
+    if (!isset($this->widgetSchema['examination_repproved_subject_teacher_list']))
+    {
+      // somebody has unset this widget
+      return;
+    }
+
+    if (is_null($con))
+    {
+      $con = $this->getConnection();
+    }
+
+    $c = new Criteria();
+    $c->add(ExaminationRepprovedSubjectTeacherPeer::TEACHER_ID, $this->object->getPrimaryKey());
+    ExaminationRepprovedSubjectTeacherPeer::doDelete($c, $con);
+
+    $values = $this->getValue('examination_repproved_subject_teacher_list');
+    if (is_array($values))
+    {
+      foreach ($values as $value)
+      {
+        $obj = new ExaminationRepprovedSubjectTeacher();
+        $obj->setTeacherId($this->object->getPrimaryKey());
+        $obj->setExaminationRepprovedSubjectId($value);
         $obj->save();
       }
     }

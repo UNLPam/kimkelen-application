@@ -29,8 +29,8 @@ class BaseStudentFormFilter extends BaseFormFilterPropel
       'health_coverage_id'                  => new sfWidgetFormPropelChoice(array('model' => 'HealthCoverage', 'add_empty' => true)),
       'origin_school'                       => new sfWidgetFormFilterInput(),
       'educational_dependency'              => new sfWidgetFormFilterInput(),
-      'student_career_subject_allowed_list' => new sfWidgetFormPropelChoice(array('model' => 'CareerSubject', 'add_empty' => true)),
       'student_tag_list'                    => new sfWidgetFormPropelChoice(array('model' => 'Tag', 'add_empty' => true)),
+      'student_career_subject_allowed_list' => new sfWidgetFormPropelChoice(array('model' => 'CareerSubject', 'add_empty' => true)),
     ));
 
     $this->setValidators(array(
@@ -49,8 +49,8 @@ class BaseStudentFormFilter extends BaseFormFilterPropel
       'health_coverage_id'                  => new sfValidatorPropelChoice(array('required' => false, 'model' => 'HealthCoverage', 'column' => 'id')),
       'origin_school'                       => new sfValidatorPass(array('required' => false)),
       'educational_dependency'              => new sfValidatorPass(array('required' => false)),
-      'student_career_subject_allowed_list' => new sfValidatorPropelChoice(array('model' => 'CareerSubject', 'required' => false)),
       'student_tag_list'                    => new sfValidatorPropelChoice(array('model' => 'Tag', 'required' => false)),
+      'student_career_subject_allowed_list' => new sfValidatorPropelChoice(array('model' => 'CareerSubject', 'required' => false)),
     ));
 
     $this->widgetSchema->setNameFormat('student_filters[%s]');
@@ -58,31 +58,6 @@ class BaseStudentFormFilter extends BaseFormFilterPropel
     $this->errorSchema = new sfValidatorErrorSchema($this->validatorSchema);
 
     parent::setup();
-  }
-
-  public function addStudentCareerSubjectAllowedListColumnCriteria(Criteria $criteria, $field, $values)
-  {
-    if (!is_array($values))
-    {
-      $values = array($values);
-    }
-
-    if (!count($values))
-    {
-      return;
-    }
-
-    $criteria->addJoin(StudentCareerSubjectAllowedPeer::STUDENT_ID, StudentPeer::ID);
-
-    $value = array_pop($values);
-    $criterion = $criteria->getNewCriterion(StudentCareerSubjectAllowedPeer::CAREER_SUBJECT_ID, $value);
-
-    foreach ($values as $value)
-    {
-      $criterion->addOr($criteria->getNewCriterion(StudentCareerSubjectAllowedPeer::CAREER_SUBJECT_ID, $value));
-    }
-
-    $criteria->add($criterion);
   }
 
   public function addStudentTagListColumnCriteria(Criteria $criteria, $field, $values)
@@ -105,6 +80,31 @@ class BaseStudentFormFilter extends BaseFormFilterPropel
     foreach ($values as $value)
     {
       $criterion->addOr($criteria->getNewCriterion(StudentTagPeer::TAG_ID, $value));
+    }
+
+    $criteria->add($criterion);
+  }
+
+  public function addStudentCareerSubjectAllowedListColumnCriteria(Criteria $criteria, $field, $values)
+  {
+    if (!is_array($values))
+    {
+      $values = array($values);
+    }
+
+    if (!count($values))
+    {
+      return;
+    }
+
+    $criteria->addJoin(StudentCareerSubjectAllowedPeer::STUDENT_ID, StudentPeer::ID);
+
+    $value = array_pop($values);
+    $criterion = $criteria->getNewCriterion(StudentCareerSubjectAllowedPeer::CAREER_SUBJECT_ID, $value);
+
+    foreach ($values as $value)
+    {
+      $criterion->addOr($criteria->getNewCriterion(StudentCareerSubjectAllowedPeer::CAREER_SUBJECT_ID, $value));
     }
 
     $criteria->add($criterion);
@@ -134,8 +134,8 @@ class BaseStudentFormFilter extends BaseFormFilterPropel
       'health_coverage_id'                  => 'ForeignKey',
       'origin_school'                       => 'Text',
       'educational_dependency'              => 'Text',
-      'student_career_subject_allowed_list' => 'ManyKey',
       'student_tag_list'                    => 'ManyKey',
+      'student_career_subject_allowed_list' => 'ManyKey',
     );
   }
 }

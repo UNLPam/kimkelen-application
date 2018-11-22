@@ -4,643 +4,6 @@
 SET FOREIGN_KEY_CHECKS = 0;
 
 #-----------------------------------------------------------------------------
-#-- student_career_subject_allowed
-#-----------------------------------------------------------------------------
-
-DROP TABLE IF EXISTS `student_career_subject_allowed`;
-
-
-CREATE TABLE `student_career_subject_allowed`
-(
-	`id` INTEGER  NOT NULL AUTO_INCREMENT,
-	`career_subject_id` INTEGER  NOT NULL COMMENT 'Referencia a la materia de una carrera',
-	`student_id` INTEGER  NOT NULL COMMENT 'Referencia al estudiante',
-	PRIMARY KEY (`id`,`career_subject_id`,`student_id`),
-	UNIQUE KEY `career_subject_student` (`career_subject_id`, `student_id`),
-	KEY `career_subject_student_index`(`student_id`, `career_subject_id`),
-	CONSTRAINT `student_career_subject_allowed_FK_1`
-		FOREIGN KEY (`career_subject_id`)
-		REFERENCES `career_subject` (`id`)
-		ON UPDATE CASCADE
-		ON DELETE RESTRICT,
-	CONSTRAINT `student_career_subject_allowed_FK_2`
-		FOREIGN KEY (`student_id`)
-		REFERENCES `student` (`id`)
-		ON UPDATE CASCADE
-		ON DELETE CASCADE
-)Engine=InnoDB COMMENT='Representa que materias puede cursar un alumno';
-
-#-----------------------------------------------------------------------------
-#-- course
-#-----------------------------------------------------------------------------
-
-DROP TABLE IF EXISTS `course`;
-
-
-CREATE TABLE `course`
-(
-	`id` INTEGER  NOT NULL AUTO_INCREMENT,
-	`starts_at` DATE COMMENT 'Indica el dia que se empieza a cursar',
-	`name` VARCHAR(255)  NOT NULL COMMENT 'Nombre del curso',
-	`quota` INTEGER COMMENT 'Entero que representa la capacidad de alumnos que pueden estar inscriptos',
-	`school_year_id` INTEGER  NOT NULL,
-	`division_id` INTEGER,
-	`related_division_id` INTEGER default null COMMENT 'En caso de que una comision, se quiera relacionar con una division.',
-	`is_closed` TINYINT default 0,
-	`current_period` INTEGER default 1,
-	`is_pathway` TINYINT default 0,
-	PRIMARY KEY (`id`),
-	KEY `course_division`(`school_year_id`, `division_id`),
-	CONSTRAINT `course_FK_1`
-		FOREIGN KEY (`school_year_id`)
-		REFERENCES `school_year` (`id`)
-		ON DELETE RESTRICT,
-	INDEX `course_FI_2` (`division_id`),
-	CONSTRAINT `course_FK_2`
-		FOREIGN KEY (`division_id`)
-		REFERENCES `division` (`id`)
-		ON DELETE CASCADE,
-	INDEX `course_FI_3` (`related_division_id`),
-	CONSTRAINT `course_FK_3`
-		FOREIGN KEY (`related_division_id`)
-		REFERENCES `division` (`id`)
-		ON DELETE SET NULL
-)Engine=InnoDB COMMENT='Representa un curso para una materia';
-
-#-----------------------------------------------------------------------------
-#-- course_subject_configuration
-#-----------------------------------------------------------------------------
-
-DROP TABLE IF EXISTS `course_subject_configuration`;
-
-
-CREATE TABLE `course_subject_configuration`
-(
-	`id` INTEGER  NOT NULL AUTO_INCREMENT,
-	`course_subject_id` INTEGER,
-	`division_id` INTEGER,
-	`career_school_year_period_id` INTEGER COMMENT 'Referencia a al periodo padre (En caso de ser un bimestre, señala a un cuatrimestre padre).',
-	`max_absence` FLOAT COMMENT 'Define la cantidad de faltas permitidas en un periodo',
-	PRIMARY KEY (`id`),
-	KEY `course_subject_configuration`(`course_subject_id`, `division_id`, `career_school_year_period_id`),
-	CONSTRAINT `course_subject_configuration_FK_1`
-		FOREIGN KEY (`course_subject_id`)
-		REFERENCES `course_subject` (`id`)
-		ON DELETE CASCADE,
-	INDEX `course_subject_configuration_FI_2` (`division_id`),
-	CONSTRAINT `course_subject_configuration_FK_2`
-		FOREIGN KEY (`division_id`)
-		REFERENCES `division` (`id`)
-		ON DELETE CASCADE,
-	INDEX `course_subject_configuration_FI_3` (`career_school_year_period_id`),
-	CONSTRAINT `course_subject_configuration_FK_3`
-		FOREIGN KEY (`career_school_year_period_id`)
-		REFERENCES `career_school_year_period` (`id`)
-		ON UPDATE CASCADE
-		ON DELETE CASCADE
-)Engine=InnoDB COMMENT='Representa la configuracion de un curso';
-
-#-----------------------------------------------------------------------------
-#-- course_preceptor
-#-----------------------------------------------------------------------------
-
-DROP TABLE IF EXISTS `course_preceptor`;
-
-
-CREATE TABLE `course_preceptor`
-(
-	`id` INTEGER  NOT NULL AUTO_INCREMENT,
-	`preceptor_id` INTEGER  NOT NULL,
-	`course_id` INTEGER  NOT NULL,
-	PRIMARY KEY (`id`),
-	UNIQUE KEY `unique_course_preceptor` (`preceptor_id`, `course_id`),
-	KEY `course_preceptor`(`preceptor_id`, `course_id`),
-	CONSTRAINT `course_preceptor_FK_1`
-		FOREIGN KEY (`preceptor_id`)
-		REFERENCES `personal` (`id`)
-		ON DELETE RESTRICT,
-	INDEX `course_preceptor_FI_2` (`course_id`),
-	CONSTRAINT `course_preceptor_FK_2`
-		FOREIGN KEY (`course_id`)
-		REFERENCES `course` (`id`)
-		ON DELETE CASCADE
-)Engine=InnoDB COMMENT='Representa la relación entre un curso y su/sus preceptores a cargo';
-
-#-----------------------------------------------------------------------------
-#-- course_subject
-#-----------------------------------------------------------------------------
-
-DROP TABLE IF EXISTS `course_subject`;
-
-
-CREATE TABLE `course_subject`
-(
-	`id` INTEGER  NOT NULL AUTO_INCREMENT,
-	`course_id` INTEGER  NOT NULL,
-	`career_subject_school_year_id` INTEGER  NOT NULL,
-	PRIMARY KEY (`id`),
-	UNIQUE KEY `course_subject_unique` (`course_id`, `career_subject_school_year_id`),
-	KEY `course_subject`(`course_id`, `career_subject_school_year_id`),
-	CONSTRAINT `course_subject_FK_1`
-		FOREIGN KEY (`course_id`)
-		REFERENCES `course` (`id`)
-		ON DELETE CASCADE,
-	INDEX `course_subject_FI_2` (`career_subject_school_year_id`),
-	CONSTRAINT `course_subject_FK_2`
-		FOREIGN KEY (`career_subject_school_year_id`)
-		REFERENCES `career_subject_school_year` (`id`)
-		ON DELETE CASCADE
-)Engine=InnoDB COMMENT='Representa una materia dentro de un curso';
-
-#-----------------------------------------------------------------------------
-#-- course_subject_student
-#-----------------------------------------------------------------------------
-
-DROP TABLE IF EXISTS `course_subject_student`;
-
-
-CREATE TABLE `course_subject_student`
-(
-	`id` INTEGER  NOT NULL AUTO_INCREMENT,
-	`created_at` DATETIME,
-	`course_subject_id` INTEGER  NOT NULL COMMENT 'Referencia a la cursada de una materia',
-	`student_id` INTEGER  NOT NULL COMMENT 'Referencia al estudiante',
-	`student_approved_course_subject_id` INTEGER COMMENT 'Si el estudiante aprobo la cursada existe esta relacion',
-	`is_not_averageable` TINYINT default 0 COMMENT 'El alumno no será calificado numéricamente en este curso',
-	PRIMARY KEY (`id`),
-	UNIQUE KEY `course_subject_student_unique` (`course_subject_id`, `student_id`),
-	KEY `course_subject_student`(`course_subject_id`, `student_id`),
-	CONSTRAINT `course_subject_student_FK_1`
-		FOREIGN KEY (`course_subject_id`)
-		REFERENCES `course_subject` (`id`)
-		ON UPDATE CASCADE
-		ON DELETE RESTRICT,
-	INDEX `course_subject_student_FI_2` (`student_id`),
-	CONSTRAINT `course_subject_student_FK_2`
-		FOREIGN KEY (`student_id`)
-		REFERENCES `student` (`id`)
-		ON UPDATE CASCADE
-		ON DELETE RESTRICT,
-	INDEX `course_subject_student_FI_3` (`student_approved_course_subject_id`),
-	CONSTRAINT `course_subject_student_FK_3`
-		FOREIGN KEY (`student_approved_course_subject_id`)
-		REFERENCES `student_approved_course_subject` (`id`)
-		ON UPDATE CASCADE
-		ON DELETE SET NULL
-)Engine=InnoDB COMMENT='Cada tupla representa un inscripto a una cursada de una materia';
-
-#-----------------------------------------------------------------------------
-#-- course_subject_teacher
-#-----------------------------------------------------------------------------
-
-DROP TABLE IF EXISTS `course_subject_teacher`;
-
-
-CREATE TABLE `course_subject_teacher`
-(
-	`id` INTEGER  NOT NULL AUTO_INCREMENT,
-	`teacher_id` INTEGER  NOT NULL,
-	`course_subject_id` INTEGER  NOT NULL COMMENT 'Referencia a la cursada de una materia',
-	`situation_r_id` INTEGER  NOT NULL,
-	`date_from` DATE  NOT NULL,
-	`date_to` DATE,
-	PRIMARY KEY (`id`),
-	UNIQUE KEY `teacher_course_subject_unique` (`teacher_id`, `course_subject_id`, `situation_r_id`),
-	KEY `teacher_course_subject`(`teacher_id`, `course_subject_id`, `situation_r_id`),
-	CONSTRAINT `course_subject_teacher_FK_1`
-		FOREIGN KEY (`teacher_id`)
-		REFERENCES `teacher` (`id`)
-		ON DELETE CASCADE,
-	INDEX `course_subject_teacher_FI_2` (`course_subject_id`),
-	CONSTRAINT `course_subject_teacher_FK_2`
-		FOREIGN KEY (`course_subject_id`)
-		REFERENCES `course_subject` (`id`)
-		ON UPDATE CASCADE
-		ON DELETE CASCADE
-)Engine=InnoDB COMMENT='Sobreescribe el profesor de un curso en caso de que esta relacion exista';
-
-#-----------------------------------------------------------------------------
-#-- course_subject_day
-#-----------------------------------------------------------------------------
-
-DROP TABLE IF EXISTS `course_subject_day`;
-
-
-CREATE TABLE `course_subject_day`
-(
-	`id` INTEGER  NOT NULL AUTO_INCREMENT,
-	`course_subject_id` INTEGER  NOT NULL,
-	`day` INTEGER  NOT NULL COMMENT 'Dia de la semana en que se cursa un curso: los valores van de 1 (lunes) a 7 (domingo)',
-	`block` INTEGER default 1 NOT NULL COMMENT 'Bloque horario en un dia para una materia',
-	`starts_at` TIME COMMENT 'Hora de comienzo de la cursada',
-	`ends_at` TIME COMMENT 'Hora de fin de la cursada',
-	`classroom_id` INTEGER,
-	PRIMARY KEY (`id`),
-	KEY `course_subject_day`(`course_subject_id`, `day`),
-	CONSTRAINT `course_subject_day_FK_1`
-		FOREIGN KEY (`course_subject_id`)
-		REFERENCES `course_subject` (`id`)
-		ON UPDATE CASCADE
-		ON DELETE CASCADE,
-	INDEX `course_subject_day_FI_2` (`classroom_id`),
-	CONSTRAINT `course_subject_day_FK_2`
-		FOREIGN KEY (`classroom_id`)
-		REFERENCES `classroom` (`id`)
-		ON UPDATE CASCADE
-		ON DELETE RESTRICT
-)Engine=InnoDB COMMENT='Representa un dia en el cual se cursa una materia para un curso dado';
-
-#-----------------------------------------------------------------------------
-#-- course_subject_student_mark
-#-----------------------------------------------------------------------------
-
-DROP TABLE IF EXISTS `course_subject_student_mark`;
-
-
-CREATE TABLE `course_subject_student_mark`
-(
-	`id` INTEGER  NOT NULL AUTO_INCREMENT,
-	`created_at` DATETIME,
-	`course_subject_student_id` INTEGER  NOT NULL,
-	`mark_number` INTEGER  NOT NULL COMMENT 'Posicion de la nota, 1era, 2da, etc',
-	`mark` DECIMAL(5,2) COMMENT 'Nota que obtuvo el alumno',
-	`is_closed` TINYINT default 0 COMMENT 'Indica que se cerro la nota del alumno en ese mark_number',
-	`is_free` TINYINT default 0 COMMENT 'El alumno esta libre en este periodo',
-	PRIMARY KEY (`id`),
-	KEY `course_subject_student`(`course_subject_student_id`),
-	CONSTRAINT `course_subject_student_mark_FK_1`
-		FOREIGN KEY (`course_subject_student_id`)
-		REFERENCES `course_subject_student` (`id`)
-		ON UPDATE CASCADE
-		ON DELETE CASCADE
-)Engine=InnoDB COMMENT='Representa una nota para un alumno en una cursada de una materia (no necesariamente es la nota final)';
-
-#-----------------------------------------------------------------------------
-#-- student_approved_career_subject
-#-----------------------------------------------------------------------------
-
-DROP TABLE IF EXISTS `student_approved_career_subject`;
-
-
-CREATE TABLE `student_approved_career_subject`
-(
-	`id` INTEGER  NOT NULL AUTO_INCREMENT,
-	`created_at` DATETIME,
-	`updated_at` DATETIME,
-	`career_subject_id` INTEGER  NOT NULL COMMENT 'Referencia a la materia de una carrera',
-	`student_id` INTEGER  NOT NULL COMMENT 'Referencia al estudiante',
-	`school_year_id` INTEGER  NOT NULL COMMENT 'Referencia al school_year en que se asento la nota',
-	`mark` DECIMAL(4,2) COMMENT 'Nota que obtuvo el alumno',
-	`is_equivalence` TINYINT default 0 COMMENT 'Si es verdadera, entonces esta nota se paso como equivalencia o de otra carrera o de la historia del alumno',
-	PRIMARY KEY (`id`),
-	UNIQUE KEY `unique_student_approval` (`career_subject_id`, `student_id`, `school_year_id`),
-	KEY `student_approval`(`career_subject_id`, `student_id`, `school_year_id`),
-	KEY `student_career_subject_id`(`career_subject_id`, `student_id`),
-	KEY `student_id`(`student_id`),
-	KEY `career_subject`(`career_subject_id`),
-	CONSTRAINT `student_approved_career_subject_FK_1`
-		FOREIGN KEY (`career_subject_id`)
-		REFERENCES `career_subject` (`id`)
-		ON DELETE RESTRICT,
-	CONSTRAINT `student_approved_career_subject_FK_2`
-		FOREIGN KEY (`student_id`)
-		REFERENCES `student` (`id`)
-		ON DELETE RESTRICT,
-	INDEX `student_approved_career_subject_FI_3` (`school_year_id`),
-	CONSTRAINT `student_approved_career_subject_FK_3`
-		FOREIGN KEY (`school_year_id`)
-		REFERENCES `school_year` (`id`)
-		ON DELETE RESTRICT
-)Engine=InnoDB COMMENT='Tabla para almacenar que materias aprueban los alumnos. Una entrada en esta tabla indica que student_id aprobo career_subject_id.';
-
-#-----------------------------------------------------------------------------
-#-- student_approved_course_subject
-#-----------------------------------------------------------------------------
-
-DROP TABLE IF EXISTS `student_approved_course_subject`;
-
-
-CREATE TABLE `student_approved_course_subject`
-(
-	`id` INTEGER  NOT NULL AUTO_INCREMENT,
-	`created_at` DATETIME,
-	`updated_at` DATETIME,
-	`course_subject_id` INTEGER  NOT NULL COMMENT 'Referencia a la materia de un curso',
-	`student_id` INTEGER  NOT NULL COMMENT 'Referencia al estudiante',
-	`school_year_id` INTEGER  NOT NULL COMMENT 'Referencia al school_year en que se asento la nota',
-	`student_approved_career_subject_id` INTEGER COMMENT 'Si el estudiante aprobo el career subject existe esta relacion',
-	`mark` DECIMAL(4,2) COMMENT 'Nota que obtuvo el alumno',
-	PRIMARY KEY (`id`),
-	UNIQUE KEY `unique_student_approval` (`course_subject_id`, `student_id`, `school_year_id`),
-	KEY `student_school_year_course_subject`(`course_subject_id`, `student_id`, `school_year_id`),
-	KEY `student_school_year`(`student_id`, `school_year_id`),
-	KEY `student_course_subject`(`student_id`, `course_subject_id`),
-	KEY `student`(`student_id`),
-	KEY `course_subject`(`course_subject_id`),
-	CONSTRAINT `student_approved_course_subject_FK_1`
-		FOREIGN KEY (`course_subject_id`)
-		REFERENCES `course_subject` (`id`)
-		ON DELETE RESTRICT,
-	CONSTRAINT `student_approved_course_subject_FK_2`
-		FOREIGN KEY (`student_id`)
-		REFERENCES `student` (`id`)
-		ON DELETE RESTRICT,
-	INDEX `student_approved_course_subject_FI_3` (`school_year_id`),
-	CONSTRAINT `student_approved_course_subject_FK_3`
-		FOREIGN KEY (`school_year_id`)
-		REFERENCES `school_year` (`id`)
-		ON DELETE RESTRICT,
-	INDEX `student_approved_course_subject_FI_4` (`student_approved_career_subject_id`),
-	CONSTRAINT `student_approved_course_subject_FK_4`
-		FOREIGN KEY (`student_approved_career_subject_id`)
-		REFERENCES `student_approved_career_subject` (`id`)
-		ON UPDATE CASCADE
-		ON DELETE CASCADE
-)Engine=InnoDB COMMENT='Tabla para almacenar que materia del curso  aprueban los alumnos. Una entrada en esta tabla indica que student_id aprobo course_subject_id.';
-
-#-----------------------------------------------------------------------------
-#-- student_disapproved_course_subject
-#-----------------------------------------------------------------------------
-
-DROP TABLE IF EXISTS `student_disapproved_course_subject`;
-
-
-CREATE TABLE `student_disapproved_course_subject`
-(
-	`id` INTEGER  NOT NULL AUTO_INCREMENT,
-	`course_subject_student_id` INTEGER  NOT NULL COMMENT 'Referencia a un alumno en una materia de un curso',
-	`examination_number` INTEGER default 0 COMMENT 'Representa el numero de mesa en que rinde (Refiriendose a Diciembre, Marzo , etc)',
-	`student_approved_career_subject_id` INTEGER COMMENT 'Si el estudiante aprobo el career subject existe esta relacion',
-	PRIMARY KEY (`id`),
-	KEY `course_subject`(`course_subject_student_id`),
-	KEY `student_approved_career_subject`(`student_approved_career_subject_id`),
-	CONSTRAINT `student_disapproved_course_subject_FK_1`
-		FOREIGN KEY (`course_subject_student_id`)
-		REFERENCES `course_subject_student` (`id`)
-		ON DELETE RESTRICT,
-	CONSTRAINT `student_disapproved_course_subject_FK_2`
-		FOREIGN KEY (`student_approved_career_subject_id`)
-		REFERENCES `student_approved_career_subject` (`id`)
-		ON UPDATE SET NULL
-		ON DELETE SET NULL
-)Engine=InnoDB COMMENT='Tabla que refleja los alumnos que se presentaron a una mesa de desaprobados';
-
-#-----------------------------------------------------------------------------
-#-- examination
-#-----------------------------------------------------------------------------
-
-DROP TABLE IF EXISTS `examination`;
-
-
-CREATE TABLE `examination`
-(
-	`id` INTEGER  NOT NULL AUTO_INCREMENT,
-	`name` VARCHAR(255)  NOT NULL,
-	`date_from` DATE  NOT NULL,
-	`date_to` DATE  NOT NULL,
-	`examination_number` INTEGER default 1 NOT NULL COMMENT 'Indica la instancia de la mesa (diciembre, febrero, etc).',
-	`school_year_id` INTEGER  NOT NULL COMMENT 'año lectivo',
-	PRIMARY KEY (`id`),
-	INDEX `examination_FI_1` (`school_year_id`),
-	CONSTRAINT `examination_FK_1`
-		FOREIGN KEY (`school_year_id`)
-		REFERENCES `school_year` (`id`)
-		ON UPDATE CASCADE
-		ON DELETE RESTRICT
-)Engine=InnoDB COMMENT='Representa una mesa de examen.';
-
-#-----------------------------------------------------------------------------
-#-- examination_subject
-#-----------------------------------------------------------------------------
-
-DROP TABLE IF EXISTS `examination_subject`;
-
-
-CREATE TABLE `examination_subject`
-(
-	`id` INTEGER  NOT NULL AUTO_INCREMENT,
-	`examination_id` INTEGER  NOT NULL COMMENT 'Referencia a una mesa de examen',
-	`career_subject_school_year_id` INTEGER  NOT NULL COMMENT 'Referencia a una materia',
-	`is_closed` TINYINT default 0,
-	PRIMARY KEY (`id`),
-	UNIQUE KEY `examination_subject_unique` (`examination_id`, `career_subject_school_year_id`),
-	KEY `examination_career_subject_school_year`(`career_subject_school_year_id`, `examination_id`),
-	CONSTRAINT `examination_subject_FK_1`
-		FOREIGN KEY (`examination_id`)
-		REFERENCES `examination` (`id`)
-		ON UPDATE CASCADE
-		ON DELETE RESTRICT,
-	CONSTRAINT `examination_subject_FK_2`
-		FOREIGN KEY (`career_subject_school_year_id`)
-		REFERENCES `career_subject_school_year` (`id`)
-		ON UPDATE CASCADE
-		ON DELETE RESTRICT
-)Engine=InnoDB COMMENT='Representa una mesa de examen para una materia';
-
-#-----------------------------------------------------------------------------
-#-- examination_subject_teacher
-#-----------------------------------------------------------------------------
-
-DROP TABLE IF EXISTS `examination_subject_teacher`;
-
-
-CREATE TABLE `examination_subject_teacher`
-(
-	`id` INTEGER  NOT NULL AUTO_INCREMENT,
-	`examination_subject_id` INTEGER  NOT NULL COMMENT 'Referencia a una mesa de examen',
-	`teacher_id` INTEGER  NOT NULL COMMENT 'Referencia a un profesor',
-	PRIMARY KEY (`id`,`examination_subject_id`,`teacher_id`),
-	INDEX `examination_subject_teacher_FI_1` (`examination_subject_id`),
-	CONSTRAINT `examination_subject_teacher_FK_1`
-		FOREIGN KEY (`examination_subject_id`)
-		REFERENCES `examination_subject` (`id`)
-		ON UPDATE CASCADE
-		ON DELETE CASCADE,
-	INDEX `examination_subject_teacher_FI_2` (`teacher_id`),
-	CONSTRAINT `examination_subject_teacher_FK_2`
-		FOREIGN KEY (`teacher_id`)
-		REFERENCES `teacher` (`id`)
-		ON UPDATE CASCADE
-		ON DELETE RESTRICT
-)Engine=InnoDB COMMENT='Representa una mesa de examen para una materia, con un conjunto de profesores';
-
-#-----------------------------------------------------------------------------
-#-- course_subject_student_examination
-#-----------------------------------------------------------------------------
-
-DROP TABLE IF EXISTS `course_subject_student_examination`;
-
-
-CREATE TABLE `course_subject_student_examination`
-(
-	`id` INTEGER  NOT NULL AUTO_INCREMENT,
-	`course_subject_student_id` INTEGER  NOT NULL COMMENT 'Referencia a un alumno en una materia de un curso',
-	`examination_subject_id` INTEGER COMMENT 'Referencia a una mesa de examen',
-	`mark` DECIMAL(5,2) COMMENT 'Nota que obtuvo el alumno',
-	`is_absent` TINYINT default 0,
-	`examination_number` INTEGER default 1 NOT NULL COMMENT 'Indica la instancia en la que el alumno se inscribe (por defecto es \"Diciembre\").',
-	`can_take_examination` TINYINT default 1 COMMENT 'Indica si el alumno puede rendir el examen. Para casos en que el alumno repite antes de que rinda.',
-	`date` DATE COMMENT 'Fecha en que el alumno rinde la materia',
-	`folio_number` VARCHAR(20) COMMENT 'Número de folio del examen',
-	PRIMARY KEY (`id`),
-	UNIQUE KEY `csse_unique` (`course_subject_student_id`, `examination_subject_id`, `examination_number`),
-	KEY `course_subject_student_subject_examination_number`(`course_subject_student_id`, `examination_subject_id`, `examination_number`),
-	KEY `course_subject_student_examination_number`(`course_subject_student_id`, `examination_number`),
-	KEY `course_subject_student_id`(`course_subject_student_id`, `examination_subject_id`),
-	CONSTRAINT `course_subject_student_examination_FK_1`
-		FOREIGN KEY (`course_subject_student_id`)
-		REFERENCES `course_subject_student` (`id`)
-		ON UPDATE CASCADE
-		ON DELETE RESTRICT,
-	INDEX `course_subject_student_examination_FI_2` (`examination_subject_id`),
-	CONSTRAINT `course_subject_student_examination_FK_2`
-		FOREIGN KEY (`examination_subject_id`)
-		REFERENCES `examination_subject` (`id`)
-		ON UPDATE CASCADE
-		ON DELETE RESTRICT
-)Engine=InnoDB COMMENT='Representa la inscripción de un alumno a una mesa de examen.';
-
-#-----------------------------------------------------------------------------
-#-- student_repproved_course_subject
-#-----------------------------------------------------------------------------
-
-DROP TABLE IF EXISTS `student_repproved_course_subject`;
-
-
-CREATE TABLE `student_repproved_course_subject`
-(
-	`id` INTEGER  NOT NULL AUTO_INCREMENT,
-	`created_at` DATETIME,
-	`updated_at` DATETIME,
-	`course_subject_student_id` INTEGER  NOT NULL COMMENT 'Referencia a un alumno en una materia de un curso',
-	`student_approved_career_subject_id` INTEGER COMMENT 'Si el estudiante aprobo el career subject existe esta relacion',
-	PRIMARY KEY (`id`),
-	KEY `course_subject_student_student_approved`(`course_subject_student_id`, `student_approved_career_subject_id`),
-	CONSTRAINT `student_repproved_course_subject_FK_1`
-		FOREIGN KEY (`course_subject_student_id`)
-		REFERENCES `course_subject_student` (`id`)
-		ON UPDATE CASCADE
-		ON DELETE RESTRICT,
-	INDEX `student_repproved_course_subject_FI_2` (`student_approved_career_subject_id`),
-	CONSTRAINT `student_repproved_course_subject_FK_2`
-		FOREIGN KEY (`student_approved_career_subject_id`)
-		REFERENCES `student_approved_career_subject` (`id`)
-		ON UPDATE CASCADE
-		ON DELETE RESTRICT
-)Engine=InnoDB COMMENT='Representa a un alumno que se llevo una previa de la materia de un curso';
-
-#-----------------------------------------------------------------------------
-#-- examination_repproved
-#-----------------------------------------------------------------------------
-
-DROP TABLE IF EXISTS `examination_repproved`;
-
-
-CREATE TABLE `examination_repproved`
-(
-	`id` INTEGER  NOT NULL AUTO_INCREMENT,
-	`name` VARCHAR(255)  NOT NULL,
-	`date_from` DATE  NOT NULL,
-	`date_to` DATE  NOT NULL,
-	`examination_number` INTEGER default 1 NOT NULL COMMENT 'Indica la instancia de la mesa.',
-	`examination_type` INTEGER  NOT NULL COMMENT 'Indica el tipo de examination_repproved (Libre o previa)',
-	`school_year_id` INTEGER  NOT NULL COMMENT 'año lectivo',
-	PRIMARY KEY (`id`),
-	INDEX `examination_repproved_FI_1` (`school_year_id`),
-	CONSTRAINT `examination_repproved_FK_1`
-		FOREIGN KEY (`school_year_id`)
-		REFERENCES `school_year` (`id`)
-		ON UPDATE CASCADE
-		ON DELETE RESTRICT
-)Engine=InnoDB COMMENT='Representa una mesa de previa.';
-
-#-----------------------------------------------------------------------------
-#-- examination_repproved_subject
-#-----------------------------------------------------------------------------
-
-DROP TABLE IF EXISTS `examination_repproved_subject`;
-
-
-CREATE TABLE `examination_repproved_subject`
-(
-	`id` INTEGER  NOT NULL AUTO_INCREMENT,
-	`examination_repproved_id` INTEGER  NOT NULL COMMENT 'Referencia a una mesa de examen',
-	`career_subject_id` INTEGER  NOT NULL COMMENT 'Referencia a una materia',
-	`is_closed` TINYINT default 0,
-	PRIMARY KEY (`id`),
-	INDEX `examination_repproved_subject_FI_1` (`examination_repproved_id`),
-	CONSTRAINT `examination_repproved_subject_FK_1`
-		FOREIGN KEY (`examination_repproved_id`)
-		REFERENCES `examination_repproved` (`id`)
-		ON UPDATE CASCADE
-		ON DELETE RESTRICT,
-	INDEX `examination_repproved_subject_FI_2` (`career_subject_id`),
-	CONSTRAINT `examination_repproved_subject_FK_2`
-		FOREIGN KEY (`career_subject_id`)
-		REFERENCES `career_subject` (`id`)
-		ON UPDATE CASCADE
-		ON DELETE RESTRICT
-)Engine=InnoDB COMMENT='Representa una mesa de previa para una materia';
-
-#-----------------------------------------------------------------------------
-#-- examination_repproved_subject_teacher
-#-----------------------------------------------------------------------------
-
-DROP TABLE IF EXISTS `examination_repproved_subject_teacher`;
-
-
-CREATE TABLE `examination_repproved_subject_teacher`
-(
-	`id` INTEGER  NOT NULL AUTO_INCREMENT,
-	`examination_repproved_subject_id` INTEGER  NOT NULL COMMENT 'Referencia a una mesa de examen',
-	`teacher_id` INTEGER  NOT NULL COMMENT 'Referencia a un profesor',
-	PRIMARY KEY (`id`,`examination_repproved_subject_id`,`teacher_id`),
-	INDEX `examination_repproved_subject_teacher_FI_1` (`examination_repproved_subject_id`),
-	CONSTRAINT `examination_repproved_subject_teacher_FK_1`
-		FOREIGN KEY (`examination_repproved_subject_id`)
-		REFERENCES `examination_repproved_subject` (`id`)
-		ON UPDATE CASCADE
-		ON DELETE CASCADE,
-	INDEX `examination_repproved_subject_teacher_FI_2` (`teacher_id`),
-	CONSTRAINT `examination_repproved_subject_teacher_FK_2`
-		FOREIGN KEY (`teacher_id`)
-		REFERENCES `teacher` (`id`)
-		ON UPDATE CASCADE
-		ON DELETE RESTRICT
-)Engine=InnoDB COMMENT='Representa una mesa de previa para una materia, con un conjunto de profesores';
-
-#-----------------------------------------------------------------------------
-#-- student_examination_repproved_subject
-#-----------------------------------------------------------------------------
-
-DROP TABLE IF EXISTS `student_examination_repproved_subject`;
-
-
-CREATE TABLE `student_examination_repproved_subject`
-(
-	`id` INTEGER  NOT NULL AUTO_INCREMENT,
-	`student_repproved_course_subject_id` INTEGER  NOT NULL COMMENT 'Referencia a una previa de un alumno',
-	`examination_repproved_subject_id` INTEGER COMMENT 'Referencia a una mesa de previa',
-	`mark` DECIMAL(5,2) COMMENT 'Nota que obtuvo el alumno',
-	`is_absent` TINYINT default 0,
-	`date` DATE COMMENT 'Fecha en que el alumno rinde',
-	`folio_number` VARCHAR(20) COMMENT 'Número de folio del examen',
-	PRIMARY KEY (`id`),
-	INDEX `student_examination_repproved_subject_FI_1` (`student_repproved_course_subject_id`),
-	CONSTRAINT `student_examination_repproved_subject_FK_1`
-		FOREIGN KEY (`student_repproved_course_subject_id`)
-		REFERENCES `student_repproved_course_subject` (`id`)
-		ON UPDATE CASCADE
-		ON DELETE RESTRICT,
-	INDEX `student_examination_repproved_subject_FI_2` (`examination_repproved_subject_id`),
-	CONSTRAINT `student_examination_repproved_subject_FK_2`
-		FOREIGN KEY (`examination_repproved_subject_id`)
-		REFERENCES `examination_repproved_subject` (`id`)
-		ON UPDATE CASCADE
-		ON DELETE RESTRICT
-)Engine=InnoDB COMMENT='Representa la inscripción de un alumno a una mesa de previa.';
-
-#-----------------------------------------------------------------------------
 #-- person
 #-----------------------------------------------------------------------------
 
@@ -1029,100 +392,6 @@ CREATE TABLE `license_type`
 )Engine=InnoDB COMMENT='Tipos de licencia';
 
 #-----------------------------------------------------------------------------
-#-- pathway
-#-----------------------------------------------------------------------------
-
-DROP TABLE IF EXISTS `pathway`;
-
-
-CREATE TABLE `pathway`
-(
-	`id` INTEGER  NOT NULL AUTO_INCREMENT,
-	`name` VARCHAR(255),
-	`school_year_id` INTEGER  NOT NULL COMMENT 'Referencia el año lectivo',
-	PRIMARY KEY (`id`),
-	INDEX `pathway_FI_1` (`school_year_id`),
-	CONSTRAINT `pathway_FK_1`
-		FOREIGN KEY (`school_year_id`)
-		REFERENCES `school_year` (`id`)
-)Engine=InnoDB COMMENT='Representa una trayectoria';
-
-#-----------------------------------------------------------------------------
-#-- pathway_student
-#-----------------------------------------------------------------------------
-
-DROP TABLE IF EXISTS `pathway_student`;
-
-
-CREATE TABLE `pathway_student`
-(
-	`id` INTEGER  NOT NULL AUTO_INCREMENT,
-	`student_id` INTEGER  NOT NULL COMMENT 'Referencia al estudiante',
-	`pathway_id` INTEGER  NOT NULL COMMENT 'Referencia a la trayectoria',
-	`year` INTEGER COMMENT 'Representa el año para el cual el alumno se inscribe en trayectoria',
-	PRIMARY KEY (`id`),
-	UNIQUE KEY `pathway_student` (`pathway_id`, `student_id`),
-	KEY `pathway_student_index`(`pathway_id`, `student_id`),
-	INDEX `pathway_student_FI_1` (`student_id`),
-	CONSTRAINT `pathway_student_FK_1`
-		FOREIGN KEY (`student_id`)
-		REFERENCES `student` (`id`),
-	CONSTRAINT `pathway_student_FK_2`
-		FOREIGN KEY (`pathway_id`)
-		REFERENCES `pathway` (`id`)
-)Engine=InnoDB COMMENT='Representa la inscripción de un alumno en una trayectoria';
-
-#-----------------------------------------------------------------------------
-#-- course_subject_student_pathway
-#-----------------------------------------------------------------------------
-
-DROP TABLE IF EXISTS `course_subject_student_pathway`;
-
-
-CREATE TABLE `course_subject_student_pathway`
-(
-	`id` INTEGER  NOT NULL AUTO_INCREMENT,
-	`student_id` INTEGER  NOT NULL COMMENT 'Referencia al estudiante',
-	`course_subject_id` INTEGER  NOT NULL COMMENT 'Referencia a la materia dentro del curso',
-	`mark` DECIMAL(5,2) COMMENT 'Representa la nota que obtiene el alumno en la trayectoria. Se aprueba con 7 (CNLP).',
-	`approval_date` DATE COMMENT 'Representa la fecha de aprobación del curso trayectoria',
-	`pathway_student_id` INTEGER  NOT NULL COMMENT 'Referencia a la trayectoria',
-	PRIMARY KEY (`id`),
-	INDEX `course_subject_student_pathway_FI_1` (`student_id`),
-	CONSTRAINT `course_subject_student_pathway_FK_1`
-		FOREIGN KEY (`student_id`)
-		REFERENCES `student` (`id`),
-	INDEX `course_subject_student_pathway_FI_2` (`course_subject_id`),
-	CONSTRAINT `course_subject_student_pathway_FK_2`
-		FOREIGN KEY (`course_subject_id`)
-		REFERENCES `course_subject` (`id`),
-	INDEX `course_subject_student_pathway_FI_3` (`pathway_student_id`),
-	CONSTRAINT `course_subject_student_pathway_FK_3`
-		FOREIGN KEY (`pathway_student_id`)
-		REFERENCES `pathway_student` (`id`)
-)Engine=InnoDB COMMENT='Representa la inscripción de un alumno en un curso de trayectoria';
-
-#-----------------------------------------------------------------------------
-#-- tentative_repproved_student
-#-----------------------------------------------------------------------------
-
-DROP TABLE IF EXISTS `tentative_repproved_student`;
-
-
-CREATE TABLE `tentative_repproved_student`
-(
-	`id` INTEGER  NOT NULL AUTO_INCREMENT,
-	`created_at` DATETIME,
-	`student_career_school_year_id` INTEGER  NOT NULL,
-	`is_deleted` TINYINT default 0,
-	PRIMARY KEY (`id`),
-	INDEX `tentative_repproved_student_FI_1` (`student_career_school_year_id`),
-	CONSTRAINT `tentative_repproved_student_FK_1`
-		FOREIGN KEY (`student_career_school_year_id`)
-		REFERENCES `student_career_school_year` (`id`)
-)Engine=InnoDB COMMENT='Representa un alumno que puede llegar a repetir o a ser marcado como trayectoria';
-
-#-----------------------------------------------------------------------------
 #-- student_attendance
 #-----------------------------------------------------------------------------
 
@@ -1312,353 +581,6 @@ CREATE TABLE `student_free`
 		ON UPDATE CASCADE
 		ON DELETE RESTRICT
 )Engine=InnoDB;
-
-#-----------------------------------------------------------------------------
-#-- city
-#-----------------------------------------------------------------------------
-
-DROP TABLE IF EXISTS `city`;
-
-
-CREATE TABLE `city`
-(
-	`id` INTEGER  NOT NULL AUTO_INCREMENT,
-	`zip_code` VARCHAR(255)  NOT NULL,
-	`name` VARCHAR(255)  NOT NULL,
-	`state_id` INTEGER  NOT NULL,
-	PRIMARY KEY (`id`),
-	KEY `state`(`state_id`),
-	KEY `name`(`name`),
-	CONSTRAINT `city_FK_1`
-		FOREIGN KEY (`state_id`)
-		REFERENCES `state` (`id`)
-)Engine=InnoDB COMMENT='Representa una ciudad';
-
-#-----------------------------------------------------------------------------
-#-- state
-#-----------------------------------------------------------------------------
-
-DROP TABLE IF EXISTS `state`;
-
-
-CREATE TABLE `state`
-(
-	`id` INTEGER  NOT NULL AUTO_INCREMENT,
-	`name` VARCHAR(255)  NOT NULL,
-	`country_id` INTEGER  NOT NULL,
-	PRIMARY KEY (`id`),
-	KEY `country`(`country_id`),
-	CONSTRAINT `state_FK_1`
-		FOREIGN KEY (`country_id`)
-		REFERENCES `country` (`id`)
-)Engine=InnoDB COMMENT='Representa una provincia';
-
-#-----------------------------------------------------------------------------
-#-- country
-#-----------------------------------------------------------------------------
-
-DROP TABLE IF EXISTS `country`;
-
-
-CREATE TABLE `country`
-(
-	`id` INTEGER  NOT NULL AUTO_INCREMENT,
-	`name` VARCHAR(255)  NOT NULL,
-	PRIMARY KEY (`id`)
-)Engine=InnoDB COMMENT='Representa un País';
-
-#-----------------------------------------------------------------------------
-#-- orientation
-#-----------------------------------------------------------------------------
-
-DROP TABLE IF EXISTS `orientation`;
-
-
-CREATE TABLE `orientation`
-(
-	`id` INTEGER  NOT NULL AUTO_INCREMENT,
-	`name` VARCHAR(255)  NOT NULL COMMENT 'Nombre de la materia',
-	PRIMARY KEY (`id`)
-)Engine=InnoDB COMMENT='Define una orientacion que podra asociarse a una carrera';
-
-#-----------------------------------------------------------------------------
-#-- sub_orientation
-#-----------------------------------------------------------------------------
-
-DROP TABLE IF EXISTS `sub_orientation`;
-
-
-CREATE TABLE `sub_orientation`
-(
-	`id` INTEGER  NOT NULL AUTO_INCREMENT,
-	`name` VARCHAR(255)  NOT NULL COMMENT 'Nombre de la materia',
-	`orientation_id` INTEGER  NOT NULL,
-	PRIMARY KEY (`id`),
-	INDEX `sub_orientation_FI_1` (`orientation_id`),
-	CONSTRAINT `sub_orientation_FK_1`
-		FOREIGN KEY (`orientation_id`)
-		REFERENCES `orientation` (`id`)
-		ON UPDATE CASCADE
-		ON DELETE CASCADE
-)Engine=InnoDB COMMENT='Define una sub orientacion que podra asociarse a una carrera';
-
-#-----------------------------------------------------------------------------
-#-- shift
-#-----------------------------------------------------------------------------
-
-DROP TABLE IF EXISTS `shift`;
-
-
-CREATE TABLE `shift`
-(
-	`id` INTEGER  NOT NULL AUTO_INCREMENT,
-	`name` VARCHAR(255)  NOT NULL,
-	PRIMARY KEY (`id`)
-)Engine=InnoDB COMMENT='Representa un turno elegible por alumnos';
-
-#-----------------------------------------------------------------------------
-#-- student_study
-#-----------------------------------------------------------------------------
-
-DROP TABLE IF EXISTS `student_study`;
-
-
-CREATE TABLE `student_study`
-(
-	`id` INTEGER  NOT NULL AUTO_INCREMENT,
-	`student_id` INTEGER  NOT NULL,
-	`study_id` INTEGER  NOT NULL,
-	PRIMARY KEY (`id`,`study_id`),
-	INDEX `student_study_FI_1` (`student_id`),
-	CONSTRAINT `student_study_FK_1`
-		FOREIGN KEY (`student_id`)
-		REFERENCES `student` (`id`)
-		ON DELETE CASCADE,
-	INDEX `student_study_FI_2` (`study_id`),
-	CONSTRAINT `student_study_FK_2`
-		FOREIGN KEY (`study_id`)
-		REFERENCES `study` (`id`)
-		ON DELETE CASCADE
-)Engine=InnoDB COMMENT='Representa un estudio cursado por el alumno';
-
-#-----------------------------------------------------------------------------
-#-- study
-#-----------------------------------------------------------------------------
-
-DROP TABLE IF EXISTS `study`;
-
-
-CREATE TABLE `study`
-(
-	`id` INTEGER  NOT NULL AUTO_INCREMENT,
-	`name` VARCHAR(255)  NOT NULL,
-	PRIMARY KEY (`id`),
-	UNIQUE KEY `study_U_1` (`name`)
-)Engine=InnoDB COMMENT='Representa un estudio cursado';
-
-#-----------------------------------------------------------------------------
-#-- occupation
-#-----------------------------------------------------------------------------
-
-DROP TABLE IF EXISTS `occupation`;
-
-
-CREATE TABLE `occupation`
-(
-	`id` INTEGER  NOT NULL AUTO_INCREMENT,
-	`name` VARCHAR(256)  NOT NULL,
-	PRIMARY KEY (`id`),
-	UNIQUE KEY `name` (`name`(20))
-)Engine=InnoDB;
-
-#-----------------------------------------------------------------------------
-#-- situation_r
-#-----------------------------------------------------------------------------
-
-DROP TABLE IF EXISTS `situation_r`;
-
-
-CREATE TABLE `situation_r`
-(
-	`id` INTEGER  NOT NULL AUTO_INCREMENT,
-	`name` VARCHAR(256)  NOT NULL,
-	PRIMARY KEY (`id`),
-	UNIQUE KEY `name` (`name`(20))
-)Engine=InnoDB;
-
-#-----------------------------------------------------------------------------
-#-- occupation_category
-#-----------------------------------------------------------------------------
-
-DROP TABLE IF EXISTS `occupation_category`;
-
-
-CREATE TABLE `occupation_category`
-(
-	`id` INTEGER  NOT NULL AUTO_INCREMENT,
-	`name` VARCHAR(256)  NOT NULL,
-	PRIMARY KEY (`id`),
-	UNIQUE KEY `name` (`name`(20))
-)Engine=InnoDB;
-
-#-----------------------------------------------------------------------------
-#-- classroom
-#-----------------------------------------------------------------------------
-
-DROP TABLE IF EXISTS `classroom`;
-
-
-CREATE TABLE `classroom`
-(
-	`id` INTEGER  NOT NULL AUTO_INCREMENT,
-	`name` VARCHAR(255)  NOT NULL,
-	`seat_number` INTEGER,
-	PRIMARY KEY (`id`),
-	UNIQUE KEY `classroom_U_1` (`name`)
-)Engine=InnoDB;
-
-#-----------------------------------------------------------------------------
-#-- resources
-#-----------------------------------------------------------------------------
-
-DROP TABLE IF EXISTS `resources`;
-
-
-CREATE TABLE `resources`
-(
-	`id` INTEGER  NOT NULL AUTO_INCREMENT,
-	`name` VARCHAR(255)  NOT NULL,
-	PRIMARY KEY (`id`),
-	UNIQUE KEY `resources_U_1` (`name`)
-)Engine=InnoDB;
-
-#-----------------------------------------------------------------------------
-#-- classroom_resources
-#-----------------------------------------------------------------------------
-
-DROP TABLE IF EXISTS `classroom_resources`;
-
-
-CREATE TABLE `classroom_resources`
-(
-	`id` INTEGER  NOT NULL AUTO_INCREMENT,
-	`resource_id` INTEGER  NOT NULL,
-	`classroom_id` INTEGER  NOT NULL,
-	PRIMARY KEY (`id`),
-	INDEX `classroom_resources_FI_1` (`resource_id`),
-	CONSTRAINT `classroom_resources_FK_1`
-		FOREIGN KEY (`resource_id`)
-		REFERENCES `resources` (`id`)
-		ON DELETE CASCADE,
-	INDEX `classroom_resources_FI_2` (`classroom_id`),
-	CONSTRAINT `classroom_resources_FK_2`
-		FOREIGN KEY (`classroom_id`)
-		REFERENCES `classroom` (`id`)
-		ON DELETE CASCADE
-)Engine=InnoDB;
-
-#-----------------------------------------------------------------------------
-#-- tag
-#-----------------------------------------------------------------------------
-
-DROP TABLE IF EXISTS `tag`;
-
-
-CREATE TABLE `tag`
-(
-	`id` INTEGER  NOT NULL AUTO_INCREMENT,
-	`name` VARCHAR(255)  NOT NULL,
-	PRIMARY KEY (`id`),
-	UNIQUE KEY `tag_U_1` (`name`)
-)Engine=InnoDB;
-
-#-----------------------------------------------------------------------------
-#-- sf_guard_user_profile
-#-----------------------------------------------------------------------------
-
-DROP TABLE IF EXISTS `sf_guard_user_profile`;
-
-
-CREATE TABLE `sf_guard_user_profile`
-(
-	`id` INTEGER  NOT NULL AUTO_INCREMENT,
-	`user_id` INTEGER  NOT NULL,
-	`first_name` VARCHAR(255),
-	`last_name` VARCHAR(255),
-	`identification_type` INTEGER  NOT NULL,
-	`identification_number` VARCHAR(20)  NOT NULL,
-	`email` VARCHAR(255),
-	`phone` VARCHAR(255),
-	`observations` TEXT,
-	PRIMARY KEY (`id`),
-	INDEX `sf_guard_user_profile_FI_1` (`user_id`),
-	CONSTRAINT `sf_guard_user_profile_FK_1`
-		FOREIGN KEY (`user_id`)
-		REFERENCES `sf_guard_user` (`id`)
-		ON DELETE RESTRICT
-)Engine=InnoDB COMMENT='Representa el perfil de un usuario';
-
-#-----------------------------------------------------------------------------
-#-- conduct
-#-----------------------------------------------------------------------------
-
-DROP TABLE IF EXISTS `conduct`;
-
-
-CREATE TABLE `conduct`
-(
-	`id` INTEGER  NOT NULL AUTO_INCREMENT,
-	`name` VARCHAR(255)  NOT NULL,
-	`short_name` VARCHAR(255)  NOT NULL,
-	PRIMARY KEY (`id`)
-)Engine=InnoDB COMMENT='Representa la conducta (muy buena, buena, regular, mala)';
-
-#-----------------------------------------------------------------------------
-#-- holiday
-#-----------------------------------------------------------------------------
-
-DROP TABLE IF EXISTS `holiday`;
-
-
-CREATE TABLE `holiday`
-(
-	`id` INTEGER  NOT NULL AUTO_INCREMENT,
-	`day` DATE  NOT NULL,
-	`description` VARCHAR(50),
-	PRIMARY KEY (`id`)
-)Engine=InnoDB COMMENT='Cada tupla representa un día feriado';
-
-#-----------------------------------------------------------------------------
-#-- letter_mark
-#-----------------------------------------------------------------------------
-
-DROP TABLE IF EXISTS `letter_mark`;
-
-
-CREATE TABLE `letter_mark`
-(
-	`id` INTEGER  NOT NULL AUTO_INCREMENT,
-	`letter` VARCHAR(255)  NOT NULL,
-	`value` INTEGER  NOT NULL,
-	PRIMARY KEY (`id`)
-)Engine=InnoDB COMMENT='Representa la referencia de letras a numeros';
-
-#-----------------------------------------------------------------------------
-#-- letter_mark_average
-#-----------------------------------------------------------------------------
-
-DROP TABLE IF EXISTS `letter_mark_average`;
-
-
-CREATE TABLE `letter_mark_average`
-(
-	`id` INTEGER  NOT NULL AUTO_INCREMENT,
-	`letter_mark_1` INTEGER  NOT NULL,
-	`letter_mark_2` INTEGER  NOT NULL,
-	`letter_mark_3` INTEGER  NOT NULL,
-	`letter_mark_average` INTEGER  NOT NULL,
-	PRIMARY KEY (`id`)
-)Engine=InnoDB COMMENT='null';
 
 #-----------------------------------------------------------------------------
 #-- subject
@@ -2327,6 +1249,1084 @@ CREATE TABLE `career_school_year_period`
 		ON UPDATE CASCADE
 		ON DELETE CASCADE
 )Engine=InnoDB COMMENT='Cada tupla representa un periodo en una carrera de un año lectivo';
+
+#-----------------------------------------------------------------------------
+#-- pathway
+#-----------------------------------------------------------------------------
+
+DROP TABLE IF EXISTS `pathway`;
+
+
+CREATE TABLE `pathway`
+(
+	`id` INTEGER  NOT NULL AUTO_INCREMENT,
+	`name` VARCHAR(255),
+	`school_year_id` INTEGER  NOT NULL COMMENT 'Referencia el año lectivo',
+	PRIMARY KEY (`id`),
+	INDEX `pathway_FI_1` (`school_year_id`),
+	CONSTRAINT `pathway_FK_1`
+		FOREIGN KEY (`school_year_id`)
+		REFERENCES `school_year` (`id`)
+)Engine=InnoDB COMMENT='Representa una trayectoria';
+
+#-----------------------------------------------------------------------------
+#-- pathway_student
+#-----------------------------------------------------------------------------
+
+DROP TABLE IF EXISTS `pathway_student`;
+
+
+CREATE TABLE `pathway_student`
+(
+	`id` INTEGER  NOT NULL AUTO_INCREMENT,
+	`student_id` INTEGER  NOT NULL COMMENT 'Referencia al estudiante',
+	`pathway_id` INTEGER  NOT NULL COMMENT 'Referencia a la trayectoria',
+	`year` INTEGER COMMENT 'Representa el año para el cual el alumno se inscribe en trayectoria',
+	PRIMARY KEY (`id`),
+	UNIQUE KEY `pathway_student` (`pathway_id`, `student_id`),
+	KEY `pathway_student_index`(`pathway_id`, `student_id`),
+	INDEX `pathway_student_FI_1` (`student_id`),
+	CONSTRAINT `pathway_student_FK_1`
+		FOREIGN KEY (`student_id`)
+		REFERENCES `student` (`id`),
+	CONSTRAINT `pathway_student_FK_2`
+		FOREIGN KEY (`pathway_id`)
+		REFERENCES `pathway` (`id`)
+)Engine=InnoDB COMMENT='Representa la inscripción de un alumno en una trayectoria';
+
+#-----------------------------------------------------------------------------
+#-- course_subject_student_pathway
+#-----------------------------------------------------------------------------
+
+DROP TABLE IF EXISTS `course_subject_student_pathway`;
+
+
+CREATE TABLE `course_subject_student_pathway`
+(
+	`id` INTEGER  NOT NULL AUTO_INCREMENT,
+	`student_id` INTEGER  NOT NULL COMMENT 'Referencia al estudiante',
+	`course_subject_id` INTEGER  NOT NULL COMMENT 'Referencia a la materia dentro del curso',
+	`mark` DECIMAL(5,2) COMMENT 'Representa la nota que obtiene el alumno en la trayectoria. Se aprueba con 7 (CNLP).',
+	`approval_date` DATE COMMENT 'Representa la fecha de aprobación del curso trayectoria',
+	`pathway_student_id` INTEGER  NOT NULL COMMENT 'Referencia a la trayectoria',
+	PRIMARY KEY (`id`),
+	INDEX `course_subject_student_pathway_FI_1` (`student_id`),
+	CONSTRAINT `course_subject_student_pathway_FK_1`
+		FOREIGN KEY (`student_id`)
+		REFERENCES `student` (`id`),
+	INDEX `course_subject_student_pathway_FI_2` (`course_subject_id`),
+	CONSTRAINT `course_subject_student_pathway_FK_2`
+		FOREIGN KEY (`course_subject_id`)
+		REFERENCES `course_subject` (`id`),
+	INDEX `course_subject_student_pathway_FI_3` (`pathway_student_id`),
+	CONSTRAINT `course_subject_student_pathway_FK_3`
+		FOREIGN KEY (`pathway_student_id`)
+		REFERENCES `pathway_student` (`id`)
+)Engine=InnoDB COMMENT='Representa la inscripción de un alumno en un curso de trayectoria';
+
+#-----------------------------------------------------------------------------
+#-- tentative_repproved_student
+#-----------------------------------------------------------------------------
+
+DROP TABLE IF EXISTS `tentative_repproved_student`;
+
+
+CREATE TABLE `tentative_repproved_student`
+(
+	`id` INTEGER  NOT NULL AUTO_INCREMENT,
+	`created_at` DATETIME,
+	`student_career_school_year_id` INTEGER  NOT NULL,
+	`is_deleted` TINYINT default 0,
+	PRIMARY KEY (`id`),
+	INDEX `tentative_repproved_student_FI_1` (`student_career_school_year_id`),
+	CONSTRAINT `tentative_repproved_student_FK_1`
+		FOREIGN KEY (`student_career_school_year_id`)
+		REFERENCES `student_career_school_year` (`id`)
+)Engine=InnoDB COMMENT='Representa un alumno que puede llegar a repetir o a ser marcado como trayectoria';
+
+#-----------------------------------------------------------------------------
+#-- student_career_subject_allowed
+#-----------------------------------------------------------------------------
+
+DROP TABLE IF EXISTS `student_career_subject_allowed`;
+
+
+CREATE TABLE `student_career_subject_allowed`
+(
+	`id` INTEGER  NOT NULL AUTO_INCREMENT,
+	`career_subject_id` INTEGER  NOT NULL COMMENT 'Referencia a la materia de una carrera',
+	`student_id` INTEGER  NOT NULL COMMENT 'Referencia al estudiante',
+	PRIMARY KEY (`id`,`career_subject_id`,`student_id`),
+	UNIQUE KEY `career_subject_student` (`career_subject_id`, `student_id`),
+	KEY `career_subject_student_index`(`student_id`, `career_subject_id`),
+	CONSTRAINT `student_career_subject_allowed_FK_1`
+		FOREIGN KEY (`career_subject_id`)
+		REFERENCES `career_subject` (`id`)
+		ON UPDATE CASCADE
+		ON DELETE RESTRICT,
+	CONSTRAINT `student_career_subject_allowed_FK_2`
+		FOREIGN KEY (`student_id`)
+		REFERENCES `student` (`id`)
+		ON UPDATE CASCADE
+		ON DELETE CASCADE
+)Engine=InnoDB COMMENT='Representa que materias puede cursar un alumno';
+
+#-----------------------------------------------------------------------------
+#-- course
+#-----------------------------------------------------------------------------
+
+DROP TABLE IF EXISTS `course`;
+
+
+CREATE TABLE `course`
+(
+	`id` INTEGER  NOT NULL AUTO_INCREMENT,
+	`starts_at` DATE COMMENT 'Indica el dia que se empieza a cursar',
+	`name` VARCHAR(255)  NOT NULL COMMENT 'Nombre del curso',
+	`quota` INTEGER COMMENT 'Entero que representa la capacidad de alumnos que pueden estar inscriptos',
+	`school_year_id` INTEGER  NOT NULL,
+	`division_id` INTEGER,
+	`related_division_id` INTEGER default null COMMENT 'En caso de que una comision, se quiera relacionar con una division.',
+	`is_closed` TINYINT default 0,
+	`current_period` INTEGER default 1,
+	`is_pathway` TINYINT default 0,
+	PRIMARY KEY (`id`),
+	KEY `course_division`(`school_year_id`, `division_id`),
+	CONSTRAINT `course_FK_1`
+		FOREIGN KEY (`school_year_id`)
+		REFERENCES `school_year` (`id`)
+		ON DELETE RESTRICT,
+	INDEX `course_FI_2` (`division_id`),
+	CONSTRAINT `course_FK_2`
+		FOREIGN KEY (`division_id`)
+		REFERENCES `division` (`id`)
+		ON DELETE CASCADE,
+	INDEX `course_FI_3` (`related_division_id`),
+	CONSTRAINT `course_FK_3`
+		FOREIGN KEY (`related_division_id`)
+		REFERENCES `division` (`id`)
+		ON DELETE SET NULL
+)Engine=InnoDB COMMENT='Representa un curso para una materia';
+
+#-----------------------------------------------------------------------------
+#-- course_subject_configuration
+#-----------------------------------------------------------------------------
+
+DROP TABLE IF EXISTS `course_subject_configuration`;
+
+
+CREATE TABLE `course_subject_configuration`
+(
+	`id` INTEGER  NOT NULL AUTO_INCREMENT,
+	`course_subject_id` INTEGER,
+	`division_id` INTEGER,
+	`career_school_year_period_id` INTEGER COMMENT 'Referencia a al periodo padre (En caso de ser un bimestre, señala a un cuatrimestre padre).',
+	`max_absence` FLOAT COMMENT 'Define la cantidad de faltas permitidas en un periodo',
+	PRIMARY KEY (`id`),
+	KEY `course_subject_configuration`(`course_subject_id`, `division_id`, `career_school_year_period_id`),
+	CONSTRAINT `course_subject_configuration_FK_1`
+		FOREIGN KEY (`course_subject_id`)
+		REFERENCES `course_subject` (`id`)
+		ON DELETE CASCADE,
+	INDEX `course_subject_configuration_FI_2` (`division_id`),
+	CONSTRAINT `course_subject_configuration_FK_2`
+		FOREIGN KEY (`division_id`)
+		REFERENCES `division` (`id`)
+		ON DELETE CASCADE,
+	INDEX `course_subject_configuration_FI_3` (`career_school_year_period_id`),
+	CONSTRAINT `course_subject_configuration_FK_3`
+		FOREIGN KEY (`career_school_year_period_id`)
+		REFERENCES `career_school_year_period` (`id`)
+		ON UPDATE CASCADE
+		ON DELETE CASCADE
+)Engine=InnoDB COMMENT='Representa la configuracion de un curso';
+
+#-----------------------------------------------------------------------------
+#-- course_preceptor
+#-----------------------------------------------------------------------------
+
+DROP TABLE IF EXISTS `course_preceptor`;
+
+
+CREATE TABLE `course_preceptor`
+(
+	`id` INTEGER  NOT NULL AUTO_INCREMENT,
+	`preceptor_id` INTEGER  NOT NULL,
+	`course_id` INTEGER  NOT NULL,
+	PRIMARY KEY (`id`),
+	UNIQUE KEY `unique_course_preceptor` (`preceptor_id`, `course_id`),
+	KEY `course_preceptor`(`preceptor_id`, `course_id`),
+	CONSTRAINT `course_preceptor_FK_1`
+		FOREIGN KEY (`preceptor_id`)
+		REFERENCES `personal` (`id`)
+		ON DELETE RESTRICT,
+	INDEX `course_preceptor_FI_2` (`course_id`),
+	CONSTRAINT `course_preceptor_FK_2`
+		FOREIGN KEY (`course_id`)
+		REFERENCES `course` (`id`)
+		ON DELETE CASCADE
+)Engine=InnoDB COMMENT='Representa la relación entre un curso y su/sus preceptores a cargo';
+
+#-----------------------------------------------------------------------------
+#-- course_subject
+#-----------------------------------------------------------------------------
+
+DROP TABLE IF EXISTS `course_subject`;
+
+
+CREATE TABLE `course_subject`
+(
+	`id` INTEGER  NOT NULL AUTO_INCREMENT,
+	`course_id` INTEGER  NOT NULL,
+	`career_subject_school_year_id` INTEGER  NOT NULL,
+	PRIMARY KEY (`id`),
+	UNIQUE KEY `course_subject_unique` (`course_id`, `career_subject_school_year_id`),
+	KEY `course_subject`(`course_id`, `career_subject_school_year_id`),
+	CONSTRAINT `course_subject_FK_1`
+		FOREIGN KEY (`course_id`)
+		REFERENCES `course` (`id`)
+		ON DELETE CASCADE,
+	INDEX `course_subject_FI_2` (`career_subject_school_year_id`),
+	CONSTRAINT `course_subject_FK_2`
+		FOREIGN KEY (`career_subject_school_year_id`)
+		REFERENCES `career_subject_school_year` (`id`)
+		ON DELETE CASCADE
+)Engine=InnoDB COMMENT='Representa una materia dentro de un curso';
+
+#-----------------------------------------------------------------------------
+#-- course_subject_student
+#-----------------------------------------------------------------------------
+
+DROP TABLE IF EXISTS `course_subject_student`;
+
+
+CREATE TABLE `course_subject_student`
+(
+	`id` INTEGER  NOT NULL AUTO_INCREMENT,
+	`created_at` DATETIME,
+	`course_subject_id` INTEGER  NOT NULL COMMENT 'Referencia a la cursada de una materia',
+	`student_id` INTEGER  NOT NULL COMMENT 'Referencia al estudiante',
+	`student_approved_course_subject_id` INTEGER COMMENT 'Si el estudiante aprobo la cursada existe esta relacion',
+	`is_not_averageable` TINYINT default 0 COMMENT 'El alumno no será calificado numéricamente en este curso',
+	PRIMARY KEY (`id`),
+	UNIQUE KEY `course_subject_student_unique` (`course_subject_id`, `student_id`),
+	KEY `course_subject_student`(`course_subject_id`, `student_id`),
+	CONSTRAINT `course_subject_student_FK_1`
+		FOREIGN KEY (`course_subject_id`)
+		REFERENCES `course_subject` (`id`)
+		ON UPDATE CASCADE
+		ON DELETE RESTRICT,
+	INDEX `course_subject_student_FI_2` (`student_id`),
+	CONSTRAINT `course_subject_student_FK_2`
+		FOREIGN KEY (`student_id`)
+		REFERENCES `student` (`id`)
+		ON UPDATE CASCADE
+		ON DELETE RESTRICT,
+	INDEX `course_subject_student_FI_3` (`student_approved_course_subject_id`),
+	CONSTRAINT `course_subject_student_FK_3`
+		FOREIGN KEY (`student_approved_course_subject_id`)
+		REFERENCES `student_approved_course_subject` (`id`)
+		ON UPDATE CASCADE
+		ON DELETE SET NULL
+)Engine=InnoDB COMMENT='Cada tupla representa un inscripto a una cursada de una materia';
+
+#-----------------------------------------------------------------------------
+#-- course_subject_teacher
+#-----------------------------------------------------------------------------
+
+DROP TABLE IF EXISTS `course_subject_teacher`;
+
+
+CREATE TABLE `course_subject_teacher`
+(
+	`id` INTEGER  NOT NULL AUTO_INCREMENT,
+	`teacher_id` INTEGER  NOT NULL,
+	`course_subject_id` INTEGER  NOT NULL COMMENT 'Referencia a la cursada de una materia',
+	`situation_r_id` INTEGER  NOT NULL,
+	`date_from` DATE  NOT NULL,
+	`date_to` DATE,
+	PRIMARY KEY (`id`),
+	UNIQUE KEY `teacher_course_subject_unique` (`teacher_id`, `course_subject_id`, `situation_r_id`),
+	KEY `teacher_course_subject`(`teacher_id`, `course_subject_id`, `situation_r_id`),
+	CONSTRAINT `course_subject_teacher_FK_1`
+		FOREIGN KEY (`teacher_id`)
+		REFERENCES `teacher` (`id`)
+		ON DELETE CASCADE,
+	INDEX `course_subject_teacher_FI_2` (`course_subject_id`),
+	CONSTRAINT `course_subject_teacher_FK_2`
+		FOREIGN KEY (`course_subject_id`)
+		REFERENCES `course_subject` (`id`)
+		ON UPDATE CASCADE
+		ON DELETE CASCADE
+)Engine=InnoDB COMMENT='Sobreescribe el profesor de un curso en caso de que esta relacion exista';
+
+#-----------------------------------------------------------------------------
+#-- course_subject_day
+#-----------------------------------------------------------------------------
+
+DROP TABLE IF EXISTS `course_subject_day`;
+
+
+CREATE TABLE `course_subject_day`
+(
+	`id` INTEGER  NOT NULL AUTO_INCREMENT,
+	`course_subject_id` INTEGER  NOT NULL,
+	`day` INTEGER  NOT NULL COMMENT 'Dia de la semana en que se cursa un curso: los valores van de 1 (lunes) a 7 (domingo)',
+	`block` INTEGER default 1 NOT NULL COMMENT 'Bloque horario en un dia para una materia',
+	`starts_at` TIME COMMENT 'Hora de comienzo de la cursada',
+	`ends_at` TIME COMMENT 'Hora de fin de la cursada',
+	`classroom_id` INTEGER,
+	PRIMARY KEY (`id`),
+	KEY `course_subject_day`(`course_subject_id`, `day`),
+	CONSTRAINT `course_subject_day_FK_1`
+		FOREIGN KEY (`course_subject_id`)
+		REFERENCES `course_subject` (`id`)
+		ON UPDATE CASCADE
+		ON DELETE CASCADE,
+	INDEX `course_subject_day_FI_2` (`classroom_id`),
+	CONSTRAINT `course_subject_day_FK_2`
+		FOREIGN KEY (`classroom_id`)
+		REFERENCES `classroom` (`id`)
+		ON UPDATE CASCADE
+		ON DELETE RESTRICT
+)Engine=InnoDB COMMENT='Representa un dia en el cual se cursa una materia para un curso dado';
+
+#-----------------------------------------------------------------------------
+#-- course_subject_student_mark
+#-----------------------------------------------------------------------------
+
+DROP TABLE IF EXISTS `course_subject_student_mark`;
+
+
+CREATE TABLE `course_subject_student_mark`
+(
+	`id` INTEGER  NOT NULL AUTO_INCREMENT,
+	`created_at` DATETIME,
+	`course_subject_student_id` INTEGER  NOT NULL,
+	`mark_number` INTEGER  NOT NULL COMMENT 'Posicion de la nota, 1era, 2da, etc',
+	`mark` DECIMAL(5,2) COMMENT 'Nota que obtuvo el alumno',
+	`is_closed` TINYINT default 0 COMMENT 'Indica que se cerro la nota del alumno en ese mark_number',
+	`is_free` TINYINT default 0 COMMENT 'El alumno esta libre en este periodo',
+	PRIMARY KEY (`id`),
+	KEY `course_subject_student`(`course_subject_student_id`),
+	CONSTRAINT `course_subject_student_mark_FK_1`
+		FOREIGN KEY (`course_subject_student_id`)
+		REFERENCES `course_subject_student` (`id`)
+		ON UPDATE CASCADE
+		ON DELETE CASCADE
+)Engine=InnoDB COMMENT='Representa una nota para un alumno en una cursada de una materia (no necesariamente es la nota final)';
+
+#-----------------------------------------------------------------------------
+#-- student_approved_career_subject
+#-----------------------------------------------------------------------------
+
+DROP TABLE IF EXISTS `student_approved_career_subject`;
+
+
+CREATE TABLE `student_approved_career_subject`
+(
+	`id` INTEGER  NOT NULL AUTO_INCREMENT,
+	`created_at` DATETIME,
+	`updated_at` DATETIME,
+	`career_subject_id` INTEGER  NOT NULL COMMENT 'Referencia a la materia de una carrera',
+	`student_id` INTEGER  NOT NULL COMMENT 'Referencia al estudiante',
+	`school_year_id` INTEGER  NOT NULL COMMENT 'Referencia al school_year en que se asento la nota',
+	`mark` DECIMAL(4,2) COMMENT 'Nota que obtuvo el alumno',
+	`is_equivalence` TINYINT default 0 COMMENT 'Si es verdadera, entonces esta nota se paso como equivalencia o de otra carrera o de la historia del alumno',
+	PRIMARY KEY (`id`),
+	UNIQUE KEY `unique_student_approval` (`career_subject_id`, `student_id`, `school_year_id`),
+	KEY `student_approval`(`career_subject_id`, `student_id`, `school_year_id`),
+	KEY `student_career_subject_id`(`career_subject_id`, `student_id`),
+	KEY `student_id`(`student_id`),
+	KEY `career_subject`(`career_subject_id`),
+	CONSTRAINT `student_approved_career_subject_FK_1`
+		FOREIGN KEY (`career_subject_id`)
+		REFERENCES `career_subject` (`id`)
+		ON DELETE RESTRICT,
+	CONSTRAINT `student_approved_career_subject_FK_2`
+		FOREIGN KEY (`student_id`)
+		REFERENCES `student` (`id`)
+		ON DELETE RESTRICT,
+	INDEX `student_approved_career_subject_FI_3` (`school_year_id`),
+	CONSTRAINT `student_approved_career_subject_FK_3`
+		FOREIGN KEY (`school_year_id`)
+		REFERENCES `school_year` (`id`)
+		ON DELETE RESTRICT
+)Engine=InnoDB COMMENT='Tabla para almacenar que materias aprueban los alumnos. Una entrada en esta tabla indica que student_id aprobo career_subject_id.';
+
+#-----------------------------------------------------------------------------
+#-- student_approved_course_subject
+#-----------------------------------------------------------------------------
+
+DROP TABLE IF EXISTS `student_approved_course_subject`;
+
+
+CREATE TABLE `student_approved_course_subject`
+(
+	`id` INTEGER  NOT NULL AUTO_INCREMENT,
+	`created_at` DATETIME,
+	`updated_at` DATETIME,
+	`course_subject_id` INTEGER  NOT NULL COMMENT 'Referencia a la materia de un curso',
+	`student_id` INTEGER  NOT NULL COMMENT 'Referencia al estudiante',
+	`school_year_id` INTEGER  NOT NULL COMMENT 'Referencia al school_year en que se asento la nota',
+	`student_approved_career_subject_id` INTEGER COMMENT 'Si el estudiante aprobo el career subject existe esta relacion',
+	`mark` DECIMAL(4,2) COMMENT 'Nota que obtuvo el alumno',
+	PRIMARY KEY (`id`),
+	UNIQUE KEY `unique_student_approval` (`course_subject_id`, `student_id`, `school_year_id`),
+	KEY `student_school_year_course_subject`(`course_subject_id`, `student_id`, `school_year_id`),
+	KEY `student_school_year`(`student_id`, `school_year_id`),
+	KEY `student_course_subject`(`student_id`, `course_subject_id`),
+	KEY `student`(`student_id`),
+	KEY `course_subject`(`course_subject_id`),
+	CONSTRAINT `student_approved_course_subject_FK_1`
+		FOREIGN KEY (`course_subject_id`)
+		REFERENCES `course_subject` (`id`)
+		ON DELETE RESTRICT,
+	CONSTRAINT `student_approved_course_subject_FK_2`
+		FOREIGN KEY (`student_id`)
+		REFERENCES `student` (`id`)
+		ON DELETE RESTRICT,
+	INDEX `student_approved_course_subject_FI_3` (`school_year_id`),
+	CONSTRAINT `student_approved_course_subject_FK_3`
+		FOREIGN KEY (`school_year_id`)
+		REFERENCES `school_year` (`id`)
+		ON DELETE RESTRICT,
+	INDEX `student_approved_course_subject_FI_4` (`student_approved_career_subject_id`),
+	CONSTRAINT `student_approved_course_subject_FK_4`
+		FOREIGN KEY (`student_approved_career_subject_id`)
+		REFERENCES `student_approved_career_subject` (`id`)
+		ON UPDATE CASCADE
+		ON DELETE CASCADE
+)Engine=InnoDB COMMENT='Tabla para almacenar que materia del curso  aprueban los alumnos. Una entrada en esta tabla indica que student_id aprobo course_subject_id.';
+
+#-----------------------------------------------------------------------------
+#-- student_disapproved_course_subject
+#-----------------------------------------------------------------------------
+
+DROP TABLE IF EXISTS `student_disapproved_course_subject`;
+
+
+CREATE TABLE `student_disapproved_course_subject`
+(
+	`id` INTEGER  NOT NULL AUTO_INCREMENT,
+	`course_subject_student_id` INTEGER  NOT NULL COMMENT 'Referencia a un alumno en una materia de un curso',
+	`examination_number` INTEGER default 0 COMMENT 'Representa el numero de mesa en que rinde (Refiriendose a Diciembre, Marzo , etc)',
+	`student_approved_career_subject_id` INTEGER COMMENT 'Si el estudiante aprobo el career subject existe esta relacion',
+	PRIMARY KEY (`id`),
+	KEY `course_subject`(`course_subject_student_id`),
+	KEY `student_approved_career_subject`(`student_approved_career_subject_id`),
+	CONSTRAINT `student_disapproved_course_subject_FK_1`
+		FOREIGN KEY (`course_subject_student_id`)
+		REFERENCES `course_subject_student` (`id`)
+		ON DELETE RESTRICT,
+	CONSTRAINT `student_disapproved_course_subject_FK_2`
+		FOREIGN KEY (`student_approved_career_subject_id`)
+		REFERENCES `student_approved_career_subject` (`id`)
+		ON UPDATE SET NULL
+		ON DELETE SET NULL
+)Engine=InnoDB COMMENT='Tabla que refleja los alumnos que se presentaron a una mesa de desaprobados';
+
+#-----------------------------------------------------------------------------
+#-- examination
+#-----------------------------------------------------------------------------
+
+DROP TABLE IF EXISTS `examination`;
+
+
+CREATE TABLE `examination`
+(
+	`id` INTEGER  NOT NULL AUTO_INCREMENT,
+	`name` VARCHAR(255)  NOT NULL,
+	`date_from` DATE  NOT NULL,
+	`date_to` DATE  NOT NULL,
+	`examination_number` INTEGER default 1 NOT NULL COMMENT 'Indica la instancia de la mesa (diciembre, febrero, etc).',
+	`school_year_id` INTEGER  NOT NULL COMMENT 'año lectivo',
+	PRIMARY KEY (`id`),
+	INDEX `examination_FI_1` (`school_year_id`),
+	CONSTRAINT `examination_FK_1`
+		FOREIGN KEY (`school_year_id`)
+		REFERENCES `school_year` (`id`)
+		ON UPDATE CASCADE
+		ON DELETE RESTRICT
+)Engine=InnoDB COMMENT='Representa una mesa de examen.';
+
+#-----------------------------------------------------------------------------
+#-- examination_subject
+#-----------------------------------------------------------------------------
+
+DROP TABLE IF EXISTS `examination_subject`;
+
+
+CREATE TABLE `examination_subject`
+(
+	`id` INTEGER  NOT NULL AUTO_INCREMENT,
+	`examination_id` INTEGER  NOT NULL COMMENT 'Referencia a una mesa de examen',
+	`career_subject_school_year_id` INTEGER  NOT NULL COMMENT 'Referencia a una materia',
+	`is_closed` TINYINT default 0,
+	PRIMARY KEY (`id`),
+	UNIQUE KEY `examination_subject_unique` (`examination_id`, `career_subject_school_year_id`),
+	KEY `examination_career_subject_school_year`(`career_subject_school_year_id`, `examination_id`),
+	CONSTRAINT `examination_subject_FK_1`
+		FOREIGN KEY (`examination_id`)
+		REFERENCES `examination` (`id`)
+		ON UPDATE CASCADE
+		ON DELETE RESTRICT,
+	CONSTRAINT `examination_subject_FK_2`
+		FOREIGN KEY (`career_subject_school_year_id`)
+		REFERENCES `career_subject_school_year` (`id`)
+		ON UPDATE CASCADE
+		ON DELETE RESTRICT
+)Engine=InnoDB COMMENT='Representa una mesa de examen para una materia';
+
+#-----------------------------------------------------------------------------
+#-- examination_subject_teacher
+#-----------------------------------------------------------------------------
+
+DROP TABLE IF EXISTS `examination_subject_teacher`;
+
+
+CREATE TABLE `examination_subject_teacher`
+(
+	`id` INTEGER  NOT NULL AUTO_INCREMENT,
+	`examination_subject_id` INTEGER  NOT NULL COMMENT 'Referencia a una mesa de examen',
+	`teacher_id` INTEGER  NOT NULL COMMENT 'Referencia a un profesor',
+	PRIMARY KEY (`id`,`examination_subject_id`,`teacher_id`),
+	INDEX `examination_subject_teacher_FI_1` (`examination_subject_id`),
+	CONSTRAINT `examination_subject_teacher_FK_1`
+		FOREIGN KEY (`examination_subject_id`)
+		REFERENCES `examination_subject` (`id`)
+		ON UPDATE CASCADE
+		ON DELETE CASCADE,
+	INDEX `examination_subject_teacher_FI_2` (`teacher_id`),
+	CONSTRAINT `examination_subject_teacher_FK_2`
+		FOREIGN KEY (`teacher_id`)
+		REFERENCES `teacher` (`id`)
+		ON UPDATE CASCADE
+		ON DELETE RESTRICT
+)Engine=InnoDB COMMENT='Representa una mesa de examen para una materia, con un conjunto de profesores';
+
+#-----------------------------------------------------------------------------
+#-- course_subject_student_examination
+#-----------------------------------------------------------------------------
+
+DROP TABLE IF EXISTS `course_subject_student_examination`;
+
+
+CREATE TABLE `course_subject_student_examination`
+(
+	`id` INTEGER  NOT NULL AUTO_INCREMENT,
+	`course_subject_student_id` INTEGER  NOT NULL COMMENT 'Referencia a un alumno en una materia de un curso',
+	`examination_subject_id` INTEGER COMMENT 'Referencia a una mesa de examen',
+	`mark` DECIMAL(5,2) COMMENT 'Nota que obtuvo el alumno',
+	`is_absent` TINYINT default 0,
+	`examination_number` INTEGER default 1 NOT NULL COMMENT 'Indica la instancia en la que el alumno se inscribe (por defecto es \"Diciembre\").',
+	`can_take_examination` TINYINT default 1 COMMENT 'Indica si el alumno puede rendir el examen. Para casos en que el alumno repite antes de que rinda.',
+	`date` DATE COMMENT 'Fecha en que el alumno rinde la materia',
+	`folio_number` VARCHAR(20) COMMENT 'Número de folio del examen',
+	PRIMARY KEY (`id`),
+	UNIQUE KEY `csse_unique` (`course_subject_student_id`, `examination_subject_id`, `examination_number`),
+	KEY `course_subject_student_subject_examination_number`(`course_subject_student_id`, `examination_subject_id`, `examination_number`),
+	KEY `course_subject_student_examination_number`(`course_subject_student_id`, `examination_number`),
+	KEY `course_subject_student_id`(`course_subject_student_id`, `examination_subject_id`),
+	CONSTRAINT `course_subject_student_examination_FK_1`
+		FOREIGN KEY (`course_subject_student_id`)
+		REFERENCES `course_subject_student` (`id`)
+		ON UPDATE CASCADE
+		ON DELETE RESTRICT,
+	INDEX `course_subject_student_examination_FI_2` (`examination_subject_id`),
+	CONSTRAINT `course_subject_student_examination_FK_2`
+		FOREIGN KEY (`examination_subject_id`)
+		REFERENCES `examination_subject` (`id`)
+		ON UPDATE CASCADE
+		ON DELETE RESTRICT
+)Engine=InnoDB COMMENT='Representa la inscripción de un alumno a una mesa de examen.';
+
+#-----------------------------------------------------------------------------
+#-- student_repproved_course_subject
+#-----------------------------------------------------------------------------
+
+DROP TABLE IF EXISTS `student_repproved_course_subject`;
+
+
+CREATE TABLE `student_repproved_course_subject`
+(
+	`id` INTEGER  NOT NULL AUTO_INCREMENT,
+	`created_at` DATETIME,
+	`updated_at` DATETIME,
+	`course_subject_student_id` INTEGER  NOT NULL COMMENT 'Referencia a un alumno en una materia de un curso',
+	`student_approved_career_subject_id` INTEGER COMMENT 'Si el estudiante aprobo el career subject existe esta relacion',
+	PRIMARY KEY (`id`),
+	KEY `course_subject_student_student_approved`(`course_subject_student_id`, `student_approved_career_subject_id`),
+	CONSTRAINT `student_repproved_course_subject_FK_1`
+		FOREIGN KEY (`course_subject_student_id`)
+		REFERENCES `course_subject_student` (`id`)
+		ON UPDATE CASCADE
+		ON DELETE RESTRICT,
+	INDEX `student_repproved_course_subject_FI_2` (`student_approved_career_subject_id`),
+	CONSTRAINT `student_repproved_course_subject_FK_2`
+		FOREIGN KEY (`student_approved_career_subject_id`)
+		REFERENCES `student_approved_career_subject` (`id`)
+		ON UPDATE CASCADE
+		ON DELETE RESTRICT
+)Engine=InnoDB COMMENT='Representa a un alumno que se llevo una previa de la materia de un curso';
+
+#-----------------------------------------------------------------------------
+#-- examination_repproved
+#-----------------------------------------------------------------------------
+
+DROP TABLE IF EXISTS `examination_repproved`;
+
+
+CREATE TABLE `examination_repproved`
+(
+	`id` INTEGER  NOT NULL AUTO_INCREMENT,
+	`name` VARCHAR(255)  NOT NULL,
+	`date_from` DATE  NOT NULL,
+	`date_to` DATE  NOT NULL,
+	`examination_number` INTEGER default 1 NOT NULL COMMENT 'Indica la instancia de la mesa.',
+	`examination_type` INTEGER  NOT NULL COMMENT 'Indica el tipo de examination_repproved (Libre o previa)',
+	`school_year_id` INTEGER  NOT NULL COMMENT 'año lectivo',
+	PRIMARY KEY (`id`),
+	INDEX `examination_repproved_FI_1` (`school_year_id`),
+	CONSTRAINT `examination_repproved_FK_1`
+		FOREIGN KEY (`school_year_id`)
+		REFERENCES `school_year` (`id`)
+		ON UPDATE CASCADE
+		ON DELETE RESTRICT
+)Engine=InnoDB COMMENT='Representa una mesa de previa.';
+
+#-----------------------------------------------------------------------------
+#-- examination_repproved_subject
+#-----------------------------------------------------------------------------
+
+DROP TABLE IF EXISTS `examination_repproved_subject`;
+
+
+CREATE TABLE `examination_repproved_subject`
+(
+	`id` INTEGER  NOT NULL AUTO_INCREMENT,
+	`examination_repproved_id` INTEGER  NOT NULL COMMENT 'Referencia a una mesa de examen',
+	`career_subject_id` INTEGER  NOT NULL COMMENT 'Referencia a una materia',
+	`is_closed` TINYINT default 0,
+	PRIMARY KEY (`id`),
+	INDEX `examination_repproved_subject_FI_1` (`examination_repproved_id`),
+	CONSTRAINT `examination_repproved_subject_FK_1`
+		FOREIGN KEY (`examination_repproved_id`)
+		REFERENCES `examination_repproved` (`id`)
+		ON UPDATE CASCADE
+		ON DELETE RESTRICT,
+	INDEX `examination_repproved_subject_FI_2` (`career_subject_id`),
+	CONSTRAINT `examination_repproved_subject_FK_2`
+		FOREIGN KEY (`career_subject_id`)
+		REFERENCES `career_subject` (`id`)
+		ON UPDATE CASCADE
+		ON DELETE RESTRICT
+)Engine=InnoDB COMMENT='Representa una mesa de previa para una materia';
+
+#-----------------------------------------------------------------------------
+#-- examination_repproved_subject_teacher
+#-----------------------------------------------------------------------------
+
+DROP TABLE IF EXISTS `examination_repproved_subject_teacher`;
+
+
+CREATE TABLE `examination_repproved_subject_teacher`
+(
+	`id` INTEGER  NOT NULL AUTO_INCREMENT,
+	`examination_repproved_subject_id` INTEGER  NOT NULL COMMENT 'Referencia a una mesa de examen',
+	`teacher_id` INTEGER  NOT NULL COMMENT 'Referencia a un profesor',
+	PRIMARY KEY (`id`,`examination_repproved_subject_id`,`teacher_id`),
+	INDEX `examination_repproved_subject_teacher_FI_1` (`examination_repproved_subject_id`),
+	CONSTRAINT `examination_repproved_subject_teacher_FK_1`
+		FOREIGN KEY (`examination_repproved_subject_id`)
+		REFERENCES `examination_repproved_subject` (`id`)
+		ON UPDATE CASCADE
+		ON DELETE CASCADE,
+	INDEX `examination_repproved_subject_teacher_FI_2` (`teacher_id`),
+	CONSTRAINT `examination_repproved_subject_teacher_FK_2`
+		FOREIGN KEY (`teacher_id`)
+		REFERENCES `teacher` (`id`)
+		ON UPDATE CASCADE
+		ON DELETE RESTRICT
+)Engine=InnoDB COMMENT='Representa una mesa de previa para una materia, con un conjunto de profesores';
+
+#-----------------------------------------------------------------------------
+#-- student_examination_repproved_subject
+#-----------------------------------------------------------------------------
+
+DROP TABLE IF EXISTS `student_examination_repproved_subject`;
+
+
+CREATE TABLE `student_examination_repproved_subject`
+(
+	`id` INTEGER  NOT NULL AUTO_INCREMENT,
+	`student_repproved_course_subject_id` INTEGER  NOT NULL COMMENT 'Referencia a una previa de un alumno',
+	`examination_repproved_subject_id` INTEGER COMMENT 'Referencia a una mesa de previa',
+	`mark` DECIMAL(5,2) COMMENT 'Nota que obtuvo el alumno',
+	`is_absent` TINYINT default 0,
+	`date` DATE COMMENT 'Fecha en que el alumno rinde',
+	`folio_number` VARCHAR(20) COMMENT 'Número de folio del examen',
+	PRIMARY KEY (`id`),
+	INDEX `student_examination_repproved_subject_FI_1` (`student_repproved_course_subject_id`),
+	CONSTRAINT `student_examination_repproved_subject_FK_1`
+		FOREIGN KEY (`student_repproved_course_subject_id`)
+		REFERENCES `student_repproved_course_subject` (`id`)
+		ON UPDATE CASCADE
+		ON DELETE RESTRICT,
+	INDEX `student_examination_repproved_subject_FI_2` (`examination_repproved_subject_id`),
+	CONSTRAINT `student_examination_repproved_subject_FK_2`
+		FOREIGN KEY (`examination_repproved_subject_id`)
+		REFERENCES `examination_repproved_subject` (`id`)
+		ON UPDATE CASCADE
+		ON DELETE RESTRICT
+)Engine=InnoDB COMMENT='Representa la inscripción de un alumno a una mesa de previa.';
+
+#-----------------------------------------------------------------------------
+#-- city
+#-----------------------------------------------------------------------------
+
+DROP TABLE IF EXISTS `city`;
+
+
+CREATE TABLE `city`
+(
+	`id` INTEGER  NOT NULL AUTO_INCREMENT,
+	`zip_code` VARCHAR(255)  NOT NULL,
+	`name` VARCHAR(255)  NOT NULL,
+	`state_id` INTEGER  NOT NULL,
+	PRIMARY KEY (`id`),
+	KEY `state`(`state_id`),
+	KEY `name`(`name`),
+	CONSTRAINT `city_FK_1`
+		FOREIGN KEY (`state_id`)
+		REFERENCES `state` (`id`)
+)Engine=InnoDB COMMENT='Representa una ciudad';
+
+#-----------------------------------------------------------------------------
+#-- state
+#-----------------------------------------------------------------------------
+
+DROP TABLE IF EXISTS `state`;
+
+
+CREATE TABLE `state`
+(
+	`id` INTEGER  NOT NULL AUTO_INCREMENT,
+	`name` VARCHAR(255)  NOT NULL,
+	`country_id` INTEGER  NOT NULL,
+	PRIMARY KEY (`id`),
+	KEY `country`(`country_id`),
+	CONSTRAINT `state_FK_1`
+		FOREIGN KEY (`country_id`)
+		REFERENCES `country` (`id`)
+)Engine=InnoDB COMMENT='Representa una provincia';
+
+#-----------------------------------------------------------------------------
+#-- country
+#-----------------------------------------------------------------------------
+
+DROP TABLE IF EXISTS `country`;
+
+
+CREATE TABLE `country`
+(
+	`id` INTEGER  NOT NULL AUTO_INCREMENT,
+	`name` VARCHAR(255)  NOT NULL,
+	PRIMARY KEY (`id`)
+)Engine=InnoDB COMMENT='Representa un País';
+
+#-----------------------------------------------------------------------------
+#-- orientation
+#-----------------------------------------------------------------------------
+
+DROP TABLE IF EXISTS `orientation`;
+
+
+CREATE TABLE `orientation`
+(
+	`id` INTEGER  NOT NULL AUTO_INCREMENT,
+	`name` VARCHAR(255)  NOT NULL COMMENT 'Nombre de la materia',
+	PRIMARY KEY (`id`)
+)Engine=InnoDB COMMENT='Define una orientacion que podra asociarse a una carrera';
+
+#-----------------------------------------------------------------------------
+#-- sub_orientation
+#-----------------------------------------------------------------------------
+
+DROP TABLE IF EXISTS `sub_orientation`;
+
+
+CREATE TABLE `sub_orientation`
+(
+	`id` INTEGER  NOT NULL AUTO_INCREMENT,
+	`name` VARCHAR(255)  NOT NULL COMMENT 'Nombre de la materia',
+	`orientation_id` INTEGER  NOT NULL,
+	PRIMARY KEY (`id`),
+	INDEX `sub_orientation_FI_1` (`orientation_id`),
+	CONSTRAINT `sub_orientation_FK_1`
+		FOREIGN KEY (`orientation_id`)
+		REFERENCES `orientation` (`id`)
+		ON UPDATE CASCADE
+		ON DELETE CASCADE
+)Engine=InnoDB COMMENT='Define una sub orientacion que podra asociarse a una carrera';
+
+#-----------------------------------------------------------------------------
+#-- shift
+#-----------------------------------------------------------------------------
+
+DROP TABLE IF EXISTS `shift`;
+
+
+CREATE TABLE `shift`
+(
+	`id` INTEGER  NOT NULL AUTO_INCREMENT,
+	`name` VARCHAR(255)  NOT NULL,
+	PRIMARY KEY (`id`)
+)Engine=InnoDB COMMENT='Representa un turno elegible por alumnos';
+
+#-----------------------------------------------------------------------------
+#-- student_study
+#-----------------------------------------------------------------------------
+
+DROP TABLE IF EXISTS `student_study`;
+
+
+CREATE TABLE `student_study`
+(
+	`id` INTEGER  NOT NULL AUTO_INCREMENT,
+	`student_id` INTEGER  NOT NULL,
+	`study_id` INTEGER  NOT NULL,
+	PRIMARY KEY (`id`,`study_id`),
+	INDEX `student_study_FI_1` (`student_id`),
+	CONSTRAINT `student_study_FK_1`
+		FOREIGN KEY (`student_id`)
+		REFERENCES `student` (`id`)
+		ON DELETE CASCADE,
+	INDEX `student_study_FI_2` (`study_id`),
+	CONSTRAINT `student_study_FK_2`
+		FOREIGN KEY (`study_id`)
+		REFERENCES `study` (`id`)
+		ON DELETE CASCADE
+)Engine=InnoDB COMMENT='Representa un estudio cursado por el alumno';
+
+#-----------------------------------------------------------------------------
+#-- study
+#-----------------------------------------------------------------------------
+
+DROP TABLE IF EXISTS `study`;
+
+
+CREATE TABLE `study`
+(
+	`id` INTEGER  NOT NULL AUTO_INCREMENT,
+	`name` VARCHAR(255)  NOT NULL,
+	PRIMARY KEY (`id`),
+	UNIQUE KEY `study_U_1` (`name`)
+)Engine=InnoDB COMMENT='Representa un estudio cursado';
+
+#-----------------------------------------------------------------------------
+#-- occupation
+#-----------------------------------------------------------------------------
+
+DROP TABLE IF EXISTS `occupation`;
+
+
+CREATE TABLE `occupation`
+(
+	`id` INTEGER  NOT NULL AUTO_INCREMENT,
+	`name` VARCHAR(256)  NOT NULL,
+	PRIMARY KEY (`id`),
+	UNIQUE KEY `name` (`name`(20))
+)Engine=InnoDB;
+
+#-----------------------------------------------------------------------------
+#-- situation_r
+#-----------------------------------------------------------------------------
+
+DROP TABLE IF EXISTS `situation_r`;
+
+
+CREATE TABLE `situation_r`
+(
+	`id` INTEGER  NOT NULL AUTO_INCREMENT,
+	`name` VARCHAR(256)  NOT NULL,
+	PRIMARY KEY (`id`),
+	UNIQUE KEY `name` (`name`(20))
+)Engine=InnoDB;
+
+#-----------------------------------------------------------------------------
+#-- occupation_category
+#-----------------------------------------------------------------------------
+
+DROP TABLE IF EXISTS `occupation_category`;
+
+
+CREATE TABLE `occupation_category`
+(
+	`id` INTEGER  NOT NULL AUTO_INCREMENT,
+	`name` VARCHAR(256)  NOT NULL,
+	PRIMARY KEY (`id`),
+	UNIQUE KEY `name` (`name`(20))
+)Engine=InnoDB;
+
+#-----------------------------------------------------------------------------
+#-- classroom
+#-----------------------------------------------------------------------------
+
+DROP TABLE IF EXISTS `classroom`;
+
+
+CREATE TABLE `classroom`
+(
+	`id` INTEGER  NOT NULL AUTO_INCREMENT,
+	`name` VARCHAR(255)  NOT NULL,
+	`seat_number` INTEGER,
+	PRIMARY KEY (`id`),
+	UNIQUE KEY `classroom_U_1` (`name`)
+)Engine=InnoDB;
+
+#-----------------------------------------------------------------------------
+#-- resources
+#-----------------------------------------------------------------------------
+
+DROP TABLE IF EXISTS `resources`;
+
+
+CREATE TABLE `resources`
+(
+	`id` INTEGER  NOT NULL AUTO_INCREMENT,
+	`name` VARCHAR(255)  NOT NULL,
+	PRIMARY KEY (`id`),
+	UNIQUE KEY `resources_U_1` (`name`)
+)Engine=InnoDB;
+
+#-----------------------------------------------------------------------------
+#-- classroom_resources
+#-----------------------------------------------------------------------------
+
+DROP TABLE IF EXISTS `classroom_resources`;
+
+
+CREATE TABLE `classroom_resources`
+(
+	`id` INTEGER  NOT NULL AUTO_INCREMENT,
+	`resource_id` INTEGER  NOT NULL,
+	`classroom_id` INTEGER  NOT NULL,
+	PRIMARY KEY (`id`),
+	INDEX `classroom_resources_FI_1` (`resource_id`),
+	CONSTRAINT `classroom_resources_FK_1`
+		FOREIGN KEY (`resource_id`)
+		REFERENCES `resources` (`id`)
+		ON DELETE CASCADE,
+	INDEX `classroom_resources_FI_2` (`classroom_id`),
+	CONSTRAINT `classroom_resources_FK_2`
+		FOREIGN KEY (`classroom_id`)
+		REFERENCES `classroom` (`id`)
+		ON DELETE CASCADE
+)Engine=InnoDB;
+
+#-----------------------------------------------------------------------------
+#-- tag
+#-----------------------------------------------------------------------------
+
+DROP TABLE IF EXISTS `tag`;
+
+
+CREATE TABLE `tag`
+(
+	`id` INTEGER  NOT NULL AUTO_INCREMENT,
+	`name` VARCHAR(255)  NOT NULL,
+	PRIMARY KEY (`id`),
+	UNIQUE KEY `tag_U_1` (`name`)
+)Engine=InnoDB;
+
+#-----------------------------------------------------------------------------
+#-- sf_guard_user_profile
+#-----------------------------------------------------------------------------
+
+DROP TABLE IF EXISTS `sf_guard_user_profile`;
+
+
+CREATE TABLE `sf_guard_user_profile`
+(
+	`id` INTEGER  NOT NULL AUTO_INCREMENT,
+	`user_id` INTEGER  NOT NULL,
+	`first_name` VARCHAR(255),
+	`last_name` VARCHAR(255),
+	`identification_type` INTEGER  NOT NULL,
+	`identification_number` VARCHAR(20)  NOT NULL,
+	`email` VARCHAR(255),
+	`phone` VARCHAR(255),
+	`observations` TEXT,
+	PRIMARY KEY (`id`),
+	INDEX `sf_guard_user_profile_FI_1` (`user_id`),
+	CONSTRAINT `sf_guard_user_profile_FK_1`
+		FOREIGN KEY (`user_id`)
+		REFERENCES `sf_guard_user` (`id`)
+		ON DELETE RESTRICT
+)Engine=InnoDB COMMENT='Representa el perfil de un usuario';
+
+#-----------------------------------------------------------------------------
+#-- conduct
+#-----------------------------------------------------------------------------
+
+DROP TABLE IF EXISTS `conduct`;
+
+
+CREATE TABLE `conduct`
+(
+	`id` INTEGER  NOT NULL AUTO_INCREMENT,
+	`name` VARCHAR(255)  NOT NULL,
+	`short_name` VARCHAR(255)  NOT NULL,
+	PRIMARY KEY (`id`)
+)Engine=InnoDB COMMENT='Representa la conducta (muy buena, buena, regular, mala)';
+
+#-----------------------------------------------------------------------------
+#-- holiday
+#-----------------------------------------------------------------------------
+
+DROP TABLE IF EXISTS `holiday`;
+
+
+CREATE TABLE `holiday`
+(
+	`id` INTEGER  NOT NULL AUTO_INCREMENT,
+	`day` DATE  NOT NULL,
+	`description` VARCHAR(50),
+	PRIMARY KEY (`id`)
+)Engine=InnoDB COMMENT='Cada tupla representa un día feriado';
+
+#-----------------------------------------------------------------------------
+#-- letter_mark
+#-----------------------------------------------------------------------------
+
+DROP TABLE IF EXISTS `letter_mark`;
+
+
+CREATE TABLE `letter_mark`
+(
+	`id` INTEGER  NOT NULL AUTO_INCREMENT,
+	`letter` VARCHAR(255)  NOT NULL,
+	`value` INTEGER  NOT NULL,
+	PRIMARY KEY (`id`)
+)Engine=InnoDB COMMENT='Representa la referencia de letras a numeros';
+
+#-----------------------------------------------------------------------------
+#-- letter_mark_average
+#-----------------------------------------------------------------------------
+
+DROP TABLE IF EXISTS `letter_mark_average`;
+
+
+CREATE TABLE `letter_mark_average`
+(
+	`id` INTEGER  NOT NULL AUTO_INCREMENT,
+	`letter_mark_1` INTEGER  NOT NULL,
+	`letter_mark_2` INTEGER  NOT NULL,
+	`letter_mark_3` INTEGER  NOT NULL,
+	`letter_mark_average` INTEGER  NOT NULL,
+	PRIMARY KEY (`id`)
+)Engine=InnoDB COMMENT='null';
 
 # This restores the fkey checks, after having unset them earlier
 SET FOREIGN_KEY_CHECKS = 1;

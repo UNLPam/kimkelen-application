@@ -27,6 +27,7 @@ class BaseSubjectConfigurationFormFilter extends BaseFormFilterPropel
       'max_disciplinary_sanctions'                                 => new sfWidgetFormFilterInput(),
       'when_disapprove_show_string'                                => new sfWidgetFormChoice(array('choices' => array('' => 'yes or no', 1 => 'yes', 0 => 'no'))),
       'necessary_student_approved_career_subject_to_show_prom_def' => new sfWidgetFormChoice(array('choices' => array('' => 'yes or no', 1 => 'yes', 0 => 'no'))),
+      'numerical_mark'                                             => new sfWidgetFormFilterInput(),
     ));
 
     $this->setValidators(array(
@@ -43,6 +44,7 @@ class BaseSubjectConfigurationFormFilter extends BaseFormFilterPropel
       'max_disciplinary_sanctions'                                 => new sfValidatorSchemaFilter('text', new sfValidatorInteger(array('required' => false))),
       'when_disapprove_show_string'                                => new sfValidatorChoice(array('required' => false, 'choices' => array('', 1, 0))),
       'necessary_student_approved_career_subject_to_show_prom_def' => new sfValidatorChoice(array('required' => false, 'choices' => array('', 1, 0))),
+      'numerical_mark'                                             => new sfValidatorSchemaFilter('text', new sfValidatorInteger(array('required' => false))),
     ));
 
     $this->widgetSchema->setNameFormat('subject_configuration_filters[%s]');
@@ -74,6 +76,7 @@ class BaseSubjectConfigurationFormFilter extends BaseFormFilterPropel
       'max_disciplinary_sanctions'                                 => 'Number',
       'when_disapprove_show_string'                                => 'Boolean',
       'necessary_student_approved_career_subject_to_show_prom_def' => 'Boolean',
+      'numerical_mark'                                             => 'Number',
     );
   }
 }

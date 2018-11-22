@@ -26,6 +26,7 @@ class BaseSubjectConfigurationForm extends BaseFormPropel
       'max_disciplinary_sanctions'                                 => new sfWidgetFormInput(),
       'when_disapprove_show_string'                                => new sfWidgetFormInputCheckbox(),
       'necessary_student_approved_career_subject_to_show_prom_def' => new sfWidgetFormInputCheckbox(),
+      'numerical_mark'                                             => new sfWidgetFormInput(),
     ));
 
     $this->setValidators(array(
@@ -43,6 +44,7 @@ class BaseSubjectConfigurationForm extends BaseFormPropel
       'max_disciplinary_sanctions'                                 => new sfValidatorInteger(array('required' => false)),
       'when_disapprove_show_string'                                => new sfValidatorBoolean(array('required' => false)),
       'necessary_student_approved_career_subject_to_show_prom_def' => new sfValidatorBoolean(array('required' => false)),
+      'numerical_mark'                                             => new sfValidatorInteger(array('required' => false)),
     ));
 
     $this->widgetSchema->setNameFormat('subject_configuration[%s]');

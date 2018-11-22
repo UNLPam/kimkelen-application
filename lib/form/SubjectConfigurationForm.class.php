@@ -63,6 +63,11 @@ class SubjectConfigurationForm extends BaseSubjectConfigurationForm
 
 //    $this->setDefault('course_type',SchoolBehaviourFactory::getInstance()->getDefaultCourseType());
 
+    $choice = Array('1' => 'Numerica', '0' => 'Con letras'); //SchoolBehaviourFactory::getInstance()->getAttendanceTypeChoices();
+    $this->setWidget('numerical_mark', new sfWidgetFormChoice(array('choices' => $choice)));
+    $this->setValidator('numerical_mark', new sfValidatorChoice(array('choices' => array_keys($choice), 'required' => true)));
+    $this->widgetSchema->setLabel('numerical_mark', 'Tipo de Nota');
+
     $this->setWidget('when_disapprove_show_string', new sfWidgetFormChoice(array('choices' => array(0=>'Muestra texto', 1=>'Muestra numero'), 'multiple'=>false,'expanded'=>true)));
     $this->getWidget('when_disapprove_show_string')->setDefault($this->getObject()->getWhenDisapproveShowString());
     $this->setValidator('when_disapprove_show_string', new sfValidatorChoice(array('required' => true,'choices' => array(0, 1))));
@@ -80,7 +85,8 @@ class SubjectConfigurationForm extends BaseSubjectConfigurationForm
     $this->widgetSchema->setHelp('course_examination_count','Cantidad de mesas para que un alumno pueda aprobar la cursada.');
     $this->widgetSchema->setHelp('max_previous', 'Superado este número, el alumno debe repetir el año.');
     $this->widgetSchema->setHelp('max_disciplinary_sanctions', 'Superado este número, el alumno debe quedar libre.');
-
+    $this->widgetSchema->setHelp('numerical_mark', 'Indica si las notas seran asignadas con números o letras.');
+    
     $max_course_minimun_mark = SubjectConfigurationPeer::getMaxCourseMinimunMark();
     $min_course_minimun_mark = SubjectConfigurationPeer::getMinCourseMinuminMark();
 

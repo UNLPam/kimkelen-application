@@ -114,4 +114,8 @@ class SubjectConfiguration extends BaseSubjectConfiguration
   {
     return ($career_year_configuration = $this->getCareerYearConfiguration($year))? $career_year_configuration->getMaxAbsences(): null ;
   }
+  public function isNumericalMark()
+  {
+    return ($this->getNumericalMark()) ? true : false;
+  }
 }

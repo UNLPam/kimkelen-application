@@ -18,8 +18,8 @@ class BaseTeacherFormFilter extends BaseFormFilterPropel
       'salary'                                     => new sfWidgetFormFilterInput(),
       'aging_institution'                          => new sfWidgetFormFilterDate(array('from_date' => new sfWidgetFormDate(), 'to_date' => new sfWidgetFormDate(), 'with_empty' => true)),
       'file_number'                                => new sfWidgetFormFilterInput(),
-      'examination_subject_teacher_list'           => new sfWidgetFormPropelChoice(array('model' => 'ExaminationSubject', 'add_empty' => true)),
       'examination_repproved_subject_teacher_list' => new sfWidgetFormPropelChoice(array('model' => 'ExaminationRepprovedSubject', 'add_empty' => true)),
+      'examination_subject_teacher_list'           => new sfWidgetFormPropelChoice(array('model' => 'ExaminationSubject', 'add_empty' => true)),
     ));
 
     $this->setValidators(array(
@@ -27,8 +27,8 @@ class BaseTeacherFormFilter extends BaseFormFilterPropel
       'salary'                                     => new sfValidatorSchemaFilter('text', new sfValidatorNumber(array('required' => false))),
       'aging_institution'                          => new sfValidatorDateRange(array('required' => false, 'from_date' => new sfValidatorDate(array('required' => false)), 'to_date' => new sfValidatorDate(array('required' => false)))),
       'file_number'                                => new sfValidatorSchemaFilter('text', new sfValidatorInteger(array('required' => false))),
-      'examination_subject_teacher_list'           => new sfValidatorPropelChoice(array('model' => 'ExaminationSubject', 'required' => false)),
       'examination_repproved_subject_teacher_list' => new sfValidatorPropelChoice(array('model' => 'ExaminationRepprovedSubject', 'required' => false)),
+      'examination_subject_teacher_list'           => new sfValidatorPropelChoice(array('model' => 'ExaminationSubject', 'required' => false)),
     ));
 
     $this->widgetSchema->setNameFormat('teacher_filters[%s]');
@@ -36,31 +36,6 @@ class BaseTeacherFormFilter extends BaseFormFilterPropel
     $this->errorSchema = new sfValidatorErrorSchema($this->validatorSchema);
 
     parent::setup();
-  }
-
-  public function addExaminationSubjectTeacherListColumnCriteria(Criteria $criteria, $field, $values)
-  {
-    if (!is_array($values))
-    {
-      $values = array($values);
-    }
-
-    if (!count($values))
-    {
-      return;
-    }
-
-    $criteria->addJoin(ExaminationSubjectTeacherPeer::TEACHER_ID, TeacherPeer::ID);
-
-    $value = array_pop($values);
-    $criterion = $criteria->getNewCriterion(ExaminationSubjectTeacherPeer::EXAMINATION_SUBJECT_ID, $value);
-
-    foreach ($values as $value)
-    {
-      $criterion->addOr($criteria->getNewCriterion(ExaminationSubjectTeacherPeer::EXAMINATION_SUBJECT_ID, $value));
-    }
-
-    $criteria->add($criterion);
   }
 
   public function addExaminationRepprovedSubjectTeacherListColumnCriteria(Criteria $criteria, $field, $values)
@@ -88,6 +63,31 @@ class BaseTeacherFormFilter extends BaseFormFilterPropel
     $criteria->add($criterion);
   }
 
+  public function addExaminationSubjectTeacherListColumnCriteria(Criteria $criteria, $field, $values)
+  {
+    if (!is_array($values))
+    {
+      $values = array($values);
+    }
+
+    if (!count($values))
+    {
+      return;
+    }
+
+    $criteria->addJoin(ExaminationSubjectTeacherPeer::TEACHER_ID, TeacherPeer::ID);
+
+    $value = array_pop($values);
+    $criterion = $criteria->getNewCriterion(ExaminationSubjectTeacherPeer::EXAMINATION_SUBJECT_ID, $value);
+
+    foreach ($values as $value)
+    {
+      $criterion->addOr($criteria->getNewCriterion(ExaminationSubjectTeacherPeer::EXAMINATION_SUBJECT_ID, $value));
+    }
+
+    $criteria->add($criterion);
+  }
+
   public function getModelName()
   {
     return 'Teacher';
@@ -101,8 +101,8 @@ class BaseTeacherFormFilter extends BaseFormFilterPropel
       'salary'                                     => 'Number',
       'aging_institution'                          => 'Date',
       'file_number'                                => 'Number',
-      'examination_subject_teacher_list'           => 'ManyKey',
       'examination_repproved_subject_teacher_list' => 'ManyKey',
+      'examination_subject_teacher_list'           => 'ManyKey',
     );
   }
 }

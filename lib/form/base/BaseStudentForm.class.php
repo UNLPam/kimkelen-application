@@ -28,8 +28,8 @@ class BaseStudentForm extends BaseFormPropel
       'health_coverage_id'                  => new sfWidgetFormPropelChoice(array('model' => 'HealthCoverage', 'add_empty' => true)),
       'origin_school'                       => new sfWidgetFormInput(),
       'educational_dependency'              => new sfWidgetFormInput(),
-      'student_tag_list'                    => new sfWidgetFormPropelChoiceMany(array('model' => 'Tag')),
       'student_career_subject_allowed_list' => new sfWidgetFormPropelChoiceMany(array('model' => 'CareerSubject')),
+      'student_tag_list'                    => new sfWidgetFormPropelChoiceMany(array('model' => 'Tag')),
     ));
 
     $this->setValidators(array(
@@ -49,8 +49,8 @@ class BaseStudentForm extends BaseFormPropel
       'health_coverage_id'                  => new sfValidatorPropelChoice(array('model' => 'HealthCoverage', 'column' => 'id', 'required' => false)),
       'origin_school'                       => new sfValidatorString(array('max_length' => 255, 'required' => false)),
       'educational_dependency'              => new sfValidatorString(array('max_length' => 255, 'required' => false)),
-      'student_tag_list'                    => new sfValidatorPropelChoiceMany(array('model' => 'Tag', 'required' => false)),
       'student_career_subject_allowed_list' => new sfValidatorPropelChoiceMany(array('model' => 'CareerSubject', 'required' => false)),
+      'student_tag_list'                    => new sfValidatorPropelChoiceMany(array('model' => 'Tag', 'required' => false)),
     ));
 
     $this->widgetSchema->setNameFormat('student[%s]');
@@ -70,17 +70,6 @@ class BaseStudentForm extends BaseFormPropel
   {
     parent::updateDefaultsFromObject();
 
-    if (isset($this->widgetSchema['student_tag_list']))
-    {
-      $values = array();
-      foreach ($this->object->getStudentTags() as $obj)
-      {
-        $values[] = $obj->getTagId();
-      }
-
-      $this->setDefault('student_tag_list', $values);
-    }
-
     if (isset($this->widgetSchema['student_career_subject_allowed_list']))
     {
       $values = array();
@@ -92,49 +81,25 @@ class BaseStudentForm extends BaseFormPropel
       $this->setDefault('student_career_subject_allowed_list', $values);
     }
 
+    if (isset($this->widgetSchema['student_tag_list']))
+    {
+      $values = array();
+      foreach ($this->object->getStudentTags() as $obj)
+      {
+        $values[] = $obj->getTagId();
+      }
+
+      $this->setDefault('student_tag_list', $values);
+    }
+
   }
 
   protected function doSave($con = null)
   {
     parent::doSave($con);
 
-    $this->saveStudentTagList($con);
     $this->saveStudentCareerSubjectAllowedList($con);
-  }
-
-  public function saveStudentTagList($con = null)
-  {
-    if (!$this->isValid())
-    {
-      throw $this->getErrorSchema();
-    }
-
-    if (!isset($this->widgetSchema['student_tag_list']))
-    {
-      // somebody has unset this widget
-      return;
-    }
-
-    if (is_null($con))
-    {
-      $con = $this->getConnection();
-    }
-
-    $c = new Criteria();
-    $c->add(StudentTagPeer::STUDENT_ID, $this->object->getPrimaryKey());
-    StudentTagPeer::doDelete($c, $con);
-
-    $values = $this->getValue('student_tag_list');
-    if (is_array($values))
-    {
-      foreach ($values as $value)
-      {
-        $obj = new StudentTag();
-        $obj->setStudentId($this->object->getPrimaryKey());
-        $obj->setTagId($value);
-        $obj->save();
-      }
-    }
+    $this->saveStudentTagList($con);
   }
 
   public function saveStudentCareerSubjectAllowedList($con = null)
@@ -167,6 +132,41 @@ class BaseStudentForm extends BaseFormPropel
         $obj = new StudentCareerSubjectAllowed();
         $obj->setStudentId($this->object->getPrimaryKey());
         $obj->setCareerSubjectId($value);
+        $obj->save();
+      }
+    }
+  }
+
+  public function saveStudentTagList($con = null)
+  {
+    if (!$this->isValid())
+    {
+      throw $this->getErrorSchema();
+    }
+
+    if (!isset($this->widgetSchema['student_tag_list']))
+    {
+      // somebody has unset this widget
+      return;
+    }
+
+    if (is_null($con))
+    {
+      $con = $this->getConnection();
+    }
+
+    $c = new Criteria();
+    $c->add(StudentTagPeer::STUDENT_ID, $this->object->getPrimaryKey());
+    StudentTagPeer::doDelete($c, $con);
+
+    $values = $this->getValue('student_tag_list');
+    if (is_array($values))
+    {
+      foreach ($values as $value)
+      {
+        $obj = new StudentTag();
+        $obj->setStudentId($this->object->getPrimaryKey());
+        $obj->setTagId($value);
         $obj->save();
       }
     }

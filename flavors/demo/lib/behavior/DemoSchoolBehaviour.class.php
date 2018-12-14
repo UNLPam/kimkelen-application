@@ -25,6 +25,7 @@
 class DemoSchoolBehaviour extends BaseSchoolBehaviour
 {
 
+  protected $HOUR_FOR_SCHEMA = array(7 => "07", 8 => "08", 9 => "09", 10 => 10, 11 => 11, 12 => 12, 13 => 13, 14 => 14, 15 => 15, 16 => 16, 17 => 17, 18 => 18, 19 => 19);
   protected $MINUTES_FOR_SCHEMA = array(0 => "00", 5 => "5", 10 => "10", 15 => "15", 20 => "20", 25 => "25", 30 => "30", 35 => "35", 40 => "40", 45 => "45", 50 => "50", 55 => "55");
 
   public function getListObjectActionsForSchoolYear()

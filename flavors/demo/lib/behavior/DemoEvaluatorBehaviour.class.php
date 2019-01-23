@@ -24,4 +24,31 @@
  */
 class DemoEvaluatorBehaviour extends BaseEvaluatorBehaviour
 {
+
+public function getMarksAverage($course_subject_student, PropelPDO $con = null)
+  {
+    $first_mark = false;
+    $second_mark = false;
+     $minimum_mark = $course_subject_student->getCourseSubject($con)->getCareerSubjectSchoolYear($con)->getConfiguration($con)->getCourseMinimunMark();
+
+    foreach ($course_subject_student->getCourseSubjectStudentMarks(null, $con) as $cssm)
+    {
+      //$sum += $cssm->getMark();
+      if (($cssm->getMarkNumber() == 2) && ($cssm->getMark() >= 7) )
+       $first_mark = true;
+      if (($cssm->getMarkNumber() == 4) && ($cssm->getMark() >= 7) )
+       $second_mark = true;
+
+    }
+     if ( ($first_mark == true) && ($second_mark == true) )
+       $average = $minimum_mark;
+     else
+       $average = $minimum_mark - 1;
+
+    return $average;
+  }
+
+
+
+
 }

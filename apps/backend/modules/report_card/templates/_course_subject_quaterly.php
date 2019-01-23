@@ -36,7 +36,7 @@
 
       <?php $course_result = $course_subject_student->getCourseResult() ?>
       <?php if (!$course_subject_student->hasSomeMarkFree()): ?>
-        <td><?php echo ($course_result) ? $course_result->getResultStr() : '' ?></td>
+        <td><?php //echo ($course_result) ? $course_result->getResultStr() : '' ?></td> <!--eso imprime el valor de la columna del promedio -->
       <?php else: ?>
         <td></td>
       <?php endif; ?>
@@ -53,7 +53,7 @@
         <?php if ($is_repproved): ?>
           <?php echo $course_subject_student->getFinalAvg() ?>
         <?php else: ?>
-           <?php echo  $student->getPromDef($course_result) ?>
+           <?php //echo $student->getPromDef($course_result) ?>
         <?php endif ?>
       </td>
 

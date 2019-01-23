@@ -29,7 +29,7 @@
         <?php foreach ($course_subject_student->getCourseSubjectStudentMarks() as $key => $cssm): ?>
           <td align="center"><?php echo ((!$cssm->getMark()) ? __('free') : $cssm->getMark() ? $cssm : ''); ?></td>
         <?php endforeach; ?>
-        <td align="center"><?php echo ($final_period) ? $course_subject_student->getMarksAverage() : '' ?></td>
+       <!-- <td align="center"><?php echo ($final_period) ? $course_subject_student->getMarksAverage() : '' ?></td>-->
         <td></td>
       </tr>
     <?php endif; ?>

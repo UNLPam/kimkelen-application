@@ -66,7 +66,7 @@
             <th><?php echo __(SchoolBehaviourFactory::getInstance()->getMarkTitle($i), array('%number%' => $i)) ?></th>
           <?php endfor ?>
           <?php if ($final_period): ?>
-            <th><?php echo __('Average'); ?></th>
+           <!-- <th><?php echo __('Average'); ?></th>-->
             <th><?php echo __('Result'); ?></th>
           <?php endif; ?>
         </tr>
@@ -91,7 +91,7 @@
                 <td></td>
                 <td><?php echo SchoolBehaviourFactory::getEvaluatorInstance()->getExemptString() ?></td>
               <?php else: ?>
-                <td><?php echo $course_subject_student->getMarksAverage() ?></td>
+               <!-- <td><?php echo $course_subject_student->getMarksAverage() ?></td>-->
                 <td><?php echo $course_result ?></td>
               <?php endif; ?>
             <?php endif; ?>

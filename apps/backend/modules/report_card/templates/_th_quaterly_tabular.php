@@ -26,14 +26,26 @@
 
 
   <?php for ($mark_number = 1; $mark_number <= $max_marks; $mark_number++): ?>
-    <th><?php echo __($mark_number . '°C') ?></th>
+  
+    <!--<th><?php echo __($mark_number . '°C') ?></th>-->
+     <?php if ($mark_number == 1 || $mark_number == 3 ): ?>
+         <th><?php echo __($mark_number . '°O') ?></th> 
+         <?php endif; ?>
+     <?php  if ($mark_number == 2 || $mark_number == 4): ?>
+         <th><?php echo __($mark_number . '°C') ?></th>
+         <?php endif; ?>
+    <?php if ($mark_number == 5 ): ?>
+         <th><?php echo __($mark_number . '°CF') ?></th>
+         <?php endif; ?>
+  
+
   <?php endfor; ?>
 
-  <th><?php echo __('Prom.') ?></th>
+  <th><?php //echo __('Prom.') ?></th>
   <th><?php echo __('Ex.R.') ?></th>
   <th><?php echo __('Ex.C.') ?></th>
   <th><?php echo __('Ex.P.') ?></th>
-  <th><?php echo __('Prom.Def.') ?></th>
+  <th><?php //echo __('Prom.Def.') ?></th>
 
   <?php if ($has_attendance_for_subject): ?>
     <th><?php echo __('Inasist. 1°C') ?></th>

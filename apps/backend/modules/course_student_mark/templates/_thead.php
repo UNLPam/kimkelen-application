@@ -22,7 +22,7 @@
     <th rowspan="2"></th>
     <th align="center" rowspan="2"><?php echo __('Nombre y apellido'); ?></th>
     <th align="center" colspan="<?php echo $configuration->getCourseMarks() ?>"><?php echo __('Términos') ?></th>
-    <th align="center" rowspan="2" style="width: 10%"><?php echo __('Average') ?></th>
+ <!--   <th align="center" rowspan="2" style="width: 10%"><?php echo __('Average') ?></th>-->
     <th align="center" rowspan="2" style="width: 40%"><?php echo __('Observation') ?></th>
   </tr>
 

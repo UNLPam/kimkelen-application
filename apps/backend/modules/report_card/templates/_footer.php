@@ -28,7 +28,7 @@
     <?php if ($has_to_show_repproveds): ?>
       <?php include_partial('career_subject_repproveds', array('examination_repproveds' => $examination_repproveds, 'has_to_show_attendances_per_day' => $division->hasAttendanceForDay())); ?>
     <?php endif ?>
-    <div class="rowcom">
+    <!--<div class="rowcom">
       <div class="titletable"><?php echo __('Behaviour') ?></div>
       <table class="lefttable">
         <tr>
@@ -42,10 +42,10 @@
           <?php endforeach; ?>
         </tr>
       </table>
-    </div>
+    </div>-->
 
-    <div class="rowamon">
-      <div class="titletable"><?php echo __('Admonitions') ?></div>
+    <!-- <div class="rowamon">
+     <div class="titletable"><?php echo __('Admonitions') ?></div>
       <table class="lefttable">
         <tr>
           <th><?php echo __('1°T') ?></th>
@@ -58,7 +58,7 @@
           <?php endforeach; ?>
         </tr>
       </table>
-    </div>
+    </div>-->
 
   <?php elseif ($division->hasCourseType(CourseType::QUATERLY)): ?>
     <?php $periods = CareerSchoolYearPeriodPeer::getQuaterlyPeriodsSchoolYear($division->getCareerSchoolYearId()); ?>
@@ -69,7 +69,7 @@
     <?php if ($has_to_show_repproveds): ?>
       <?php include_partial('career_subject_repproveds', array('examination_repproveds' => $examination_repproveds, 'has_to_show_attendances_per_day' => $division->hasAttendanceForDay())); ?>
     <?php endif ?>
-    <div class="rowcom">
+    <!--<div class="rowcom">
       <div class="titletable"><?php echo __('Behaviour') ?></div>
       <table class="lefttable">
         <tr>
@@ -82,9 +82,9 @@
           <?php endforeach; ?>
         </tr>
       </table>
-    </div>
+    </div>-->
 
-    <div class="rowamon">
+    <!--<div class="rowamon">
       <div class="titletable"><?php echo __('Admonitions') ?></div>
       <table class="lefttable">
         <tr>
@@ -97,7 +97,7 @@
           <?php endforeach; ?>
         </tr>
       </table>
-    </div>
+    </div>-->
 
   <?php elseif ($division->hasCourseType(CourseType::BIMESTER)): ?>
     <?php $periods = CareerSchoolYearPeriodPeer::getBimesterPeriodsSchoolYear($division->getCareerSchoolYearId()); ?>
@@ -109,7 +109,7 @@
       <?php include_partial('career_subject_repproveds', array('examination_repproveds' => $examination_repproveds, 'has_to_show_attendances_per_day' => $division->hasAttendanceForDay())); ?>
     <?php endif ?>
 
-    <div class="rowcom">
+    <!--<div class="rowcom">
       <div class="titletable"><?php echo __('Behaviour') ?></div>
       <table class="lefttable">
         <tr>
@@ -129,10 +129,10 @@
           <?php endforeach; ?>
         </tr>
       </table>
-    </div>
+    </div>-->
 
-    <div class="rowamon">
-      <div class="titletable"><?php echo __('Admonitions') ?></div>
+    <!-- <div class="rowamon">
+     <div class="titletable"><?php echo __('Admonitions') ?></div>
       <table class="lefttable">
         <tr>
           <th colspan="2" style="text-align: center"><?php echo __('1°C') ?></th>
@@ -150,7 +150,7 @@
           <?php endforeach; ?>
         </tr>
       </table>
-    </div>
+    </div>-->
   <?php endif; ?>
 </div>
 <?php include_partial('signature_boxes') ?>

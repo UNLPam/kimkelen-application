@@ -44,6 +44,8 @@ class CourseSubjectMarksForm extends BaseCourseSubjectForm
     );
     $this->disableCSRFProtection();
     $tmp_sum = 0;
+    $configuration = $this->object->getCareerSubjectSchoolYear()->getConfiguration();
+
     foreach ($this->object->getCourseSubjectStudents() as $course_subject_student)
     {
       foreach ($course_subject_student->getAvailableCourseSubjectStudentMarks() as $course_subject_student_mark)
@@ -57,7 +59,18 @@ class CourseSubjectMarksForm extends BaseCourseSubjectForm
         }
         else
         {
-          $widgets[$widget_name] = new sfWidgetFormInput(array('default' => $course_subject_student_mark->getMark()), array('class' => 'mark'));
+          //$widgets[$widget_name] = new sfWidgetFormInput(array('default' => $course_subject_student_mark->getMark()), array('class' => 'mark'));
+
+	   if($configuration->isNumericalMark())
+          {
+            $widgets[$widget_name] = new sfWidgetFormInput(array('default' => $course_subject_student_mark->getMark()), array('class' => 'mark'));
+            $validators[$widget_name] = new sfValidatorInteger($options, $messages);
+          }
+          else
+          {
+            $widgets[$widget_name] = new sfWidgetFormPropelChoice(array('model'=> 'LetterMark', 'add_empty' => true, 'default' =>  LetterMark::getPkByValue((Int)$course_subject_student_mark->getMark())));
+            $validators[$widget_name] = new sfValidatorPropelChoice(array('model' => 'LetterMark', 'required' => false));
+          }	
 
           //IS FREE
           $free_widget_name = $course_subject_student->getId().'_free_'.$course_subject_student_mark->getMarkNumber();
@@ -73,7 +86,7 @@ class CourseSubjectMarksForm extends BaseCourseSubjectForm
           $validators[$free_widget_name] = new sfValidatorBoolean();
         }
         $tmp_sum = $this->evaluationFinalProm($course_subject_student, $course_subject_student_mark, $tmp_sum);
-        $validators[$widget_name] = new sfValidatorNumber($options, $messages);
+        //$validators[$widget_name] = new sfValidatorNumber($options, $messages);
 
       }
       $tmp_sum = 0;
@@ -118,10 +131,14 @@ class CourseSubjectMarksForm extends BaseCourseSubjectForm
         $value = $values[$course_subject_student->getId() . '_' . $course_subject_student_mark->getMarkNumber()];
         if ((!is_null($is_free)))
         {
-          if ($is_free)
+          if (($is_free) || ($value == null))
           {
             $value = 0;
           }
+	  //else
+          //{
+           // $value = LetterMarkPeer::retrieveByPk($value)->getValue();
+          //}
 
           $course_subject_student_mark->setMark($value);
           $course_subject_student_mark->setIsFree($is_free);

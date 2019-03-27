@@ -26,7 +26,7 @@ class BaseCourseSubjectStudentMarkForm extends BaseFormPropel
       'created_at'                => new sfValidatorDateTime(array('required' => false)),
       'course_subject_student_id' => new sfValidatorPropelChoice(array('model' => 'CourseSubjectStudent', 'column' => 'id')),
       'mark_number'               => new sfValidatorInteger(),
-      'mark'                      => new sfValidatorNumber(array('required' => false)),
+      'mark'                      => new sfValidatorString(array('max_length' => 5, 'required' => false)),
       'is_closed'                 => new sfValidatorBoolean(array('required' => false)),
       'is_free'                   => new sfValidatorBoolean(array('required' => false)),
     ));

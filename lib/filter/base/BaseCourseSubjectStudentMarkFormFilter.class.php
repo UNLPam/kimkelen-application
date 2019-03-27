@@ -26,7 +26,7 @@ class BaseCourseSubjectStudentMarkFormFilter extends BaseFormFilterPropel
       'created_at'                => new sfValidatorDateRange(array('required' => false, 'from_date' => new sfValidatorDate(array('required' => false)), 'to_date' => new sfValidatorDate(array('required' => false)))),
       'course_subject_student_id' => new sfValidatorPropelChoice(array('required' => false, 'model' => 'CourseSubjectStudent', 'column' => 'id')),
       'mark_number'               => new sfValidatorSchemaFilter('text', new sfValidatorInteger(array('required' => false))),
-      'mark'                      => new sfValidatorSchemaFilter('text', new sfValidatorNumber(array('required' => false))),
+      'mark'                      => new sfValidatorPass(array('required' => false)),
       'is_closed'                 => new sfValidatorChoice(array('required' => false, 'choices' => array('', 1, 0))),
       'is_free'                   => new sfValidatorChoice(array('required' => false, 'choices' => array('', 1, 0))),
     ));
@@ -50,7 +50,7 @@ class BaseCourseSubjectStudentMarkFormFilter extends BaseFormFilterPropel
       'created_at'                => 'Date',
       'course_subject_student_id' => 'ForeignKey',
       'mark_number'               => 'Number',
-      'mark'                      => 'Number',
+      'mark'                      => 'Text',
       'is_closed'                 => 'Boolean',
       'is_free'                   => 'Boolean',
     );

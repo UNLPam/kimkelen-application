@@ -291,10 +291,8 @@ classes:
         required:         true
       mark:
         description:      Nota que obtuvo el alumno
-        type:             decimal
+        type:             varchar(5)
         required:         false
-        size:             5
-        scale:            2
       is_closed:
         description:      Indica que se cerro la nota del alumno en ese mark_number
         type: boolean

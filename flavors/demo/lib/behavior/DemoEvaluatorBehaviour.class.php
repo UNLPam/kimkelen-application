@@ -25,30 +25,51 @@
 class DemoEvaluatorBehaviour extends BaseEvaluatorBehaviour
 {
 
-public function getMarksAverage($course_subject_student, PropelPDO $con = null)
-  {
-    $first_mark = false;
-    $second_mark = false;
-     $minimum_mark = $course_subject_student->getCourseSubject($con)->getCareerSubjectSchoolYear($con)->getConfiguration($con)->getCourseMinimunMark();
-
-    foreach ($course_subject_student->getCourseSubjectStudentMarks(null, $con) as $cssm)
+    public function getMarksAverage($course_subject_student, PropelPDO $con = null)
     {
-      //$sum += $cssm->getMark();
-      if (($cssm->getMarkNumber() == 2) && ($cssm->getMark() >= 7) )
-       $first_mark = true;
-      if (($cssm->getMarkNumber() == 4) && ($cssm->getMark() >= 7) )
-       $second_mark = true;
+        $first_mark = false;
+        $second_mark = false;
+        $minimum_mark = $course_subject_student->getCourseSubject($con)->getCareerSubjectSchoolYear($con)->getConfiguration($con)->getCourseMinimunMark();
+        echo "<br> ivan --* $minimum_mark";
 
-    }
-     if ( ($first_mark == true) && ($second_mark == true) )
-       $average = $minimum_mark;
-     else
-       $average = $minimum_mark - 1;
+	    foreach ($course_subject_student->getCourseSubjectStudentMarks(null, $con) as $cssm)
+	    {
+               
+		if (is_numeric($cssm->getMark()))
+                {   
 
-    return $average;
-  }
+		    if (($cssm->getMarkNumber() == 2) && ($cssm->getMark() >= 5) )
+		    {  echo "<br><br><br><br> primer nota: ".$cssm->getMark()."<br>";
+		        $first_mark = true;
+		    }
+		    if (($cssm->getMarkNumber() == 4) && ($cssm->getMark() >= 7) )
+		    {  echo "<br> segunda nota: ".$cssm->getMark()."<br>";
+		        $second_mark = true;
+		    }
 
+		}
+		else {
 
+		    if (($cssm->getMark()==”PO”) || ($cssm->getMark()==”PA”) || ($cssm->getMark()==”PE”)) 
+		    {
+		        $first_mark  = true;
+		        $second_mark = true;
+		    }
+
+		    if ( (($cssm->getMarkNumber() == 5) && ($cssm->getMark()==”MB”)) || (($cssm->getMark() == 5) &&($cssm->getMarkNumber()==”B”)) ) 
+		    {
+		        $first_mark  = true;
+		        $second_mark = true;
+		    }
+		}
+	    }
+       
+       $average = (($first_mark == true) && ($second_mark == true)) ? $minimum_mark : $minimum_mark -1;
+
+       echo "ya sali<br> $average";
+      return $average;
+  
+    } 
 
 
 }

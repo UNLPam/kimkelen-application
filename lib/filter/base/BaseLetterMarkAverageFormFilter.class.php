@@ -17,14 +17,18 @@ class BaseLetterMarkAverageFormFilter extends BaseFormFilterPropel
       'letter_mark_1'       => new sfWidgetFormFilterInput(),
       'letter_mark_2'       => new sfWidgetFormFilterInput(),
       'letter_mark_3'       => new sfWidgetFormFilterInput(),
+      'letter_mark_4'       => new sfWidgetFormFilterInput(),
+      'letter_mark_5'       => new sfWidgetFormFilterInput(),
       'letter_mark_average' => new sfWidgetFormFilterInput(),
     ));
 
     $this->setValidators(array(
-      'letter_mark_1'       => new sfValidatorSchemaFilter('text', new sfValidatorInteger(array('required' => false))),
-      'letter_mark_2'       => new sfValidatorSchemaFilter('text', new sfValidatorInteger(array('required' => false))),
-      'letter_mark_3'       => new sfValidatorSchemaFilter('text', new sfValidatorInteger(array('required' => false))),
-      'letter_mark_average' => new sfValidatorSchemaFilter('text', new sfValidatorInteger(array('required' => false))),
+      'letter_mark_1'       => new sfValidatorPass(array('required' => false)),
+      'letter_mark_2'       => new sfValidatorPass(array('required' => false)),
+      'letter_mark_3'       => new sfValidatorPass(array('required' => false)),
+      'letter_mark_4'       => new sfValidatorPass(array('required' => false)),
+      'letter_mark_5'       => new sfValidatorPass(array('required' => false)),
+      'letter_mark_average' => new sfValidatorPass(array('required' => false)),
     ));
 
     $this->widgetSchema->setNameFormat('letter_mark_average_filters[%s]');
@@ -43,10 +47,12 @@ class BaseLetterMarkAverageFormFilter extends BaseFormFilterPropel
   {
     return array(
       'id'                  => 'Number',
-      'letter_mark_1'       => 'Number',
-      'letter_mark_2'       => 'Number',
-      'letter_mark_3'       => 'Number',
-      'letter_mark_average' => 'Number',
+      'letter_mark_1'       => 'Text',
+      'letter_mark_2'       => 'Text',
+      'letter_mark_3'       => 'Text',
+      'letter_mark_4'       => 'Text',
+      'letter_mark_5'       => 'Text',
+      'letter_mark_average' => 'Text',
     );
   }
 }

@@ -79,6 +79,7 @@ class course_student_markActions extends sfActions
       $forms[$course_subject->getId()] = new $form_name($course_subject);
     }
 
+
     return $forms;
 
   }

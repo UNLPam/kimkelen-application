@@ -20,7 +20,7 @@ class BaseLetterMarkForm extends BaseFormPropel
     $this->setValidators(array(
       'id'     => new sfValidatorPropelChoice(array('model' => 'LetterMark', 'column' => 'id', 'required' => false)),
       'letter' => new sfValidatorString(array('max_length' => 255)),
-      'value'  => new sfValidatorInteger(),
+      'value'  => new sfValidatorString(array('max_length' => 255)),
     ));
 
     $this->widgetSchema->setNameFormat('letter_mark[%s]');

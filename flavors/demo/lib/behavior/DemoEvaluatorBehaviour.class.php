@@ -29,8 +29,9 @@ class DemoEvaluatorBehaviour extends BaseEvaluatorBehaviour
     {
         $first_mark = false;
         $second_mark = false;
+	$regular = false;
         $minimum_mark = $course_subject_student->getCourseSubject($con)->getCareerSubjectSchoolYear($con)->getConfiguration($con)->getCourseMinimunMark();
-        echo "<br> ivan --* $minimum_mark";
+       // echo "<br> ivan --* $minimum_mark";
 
 	    foreach ($course_subject_student->getCourseSubjectStudentMarks(null, $con) as $cssm)
 	    {
@@ -38,35 +39,43 @@ class DemoEvaluatorBehaviour extends BaseEvaluatorBehaviour
 		if (is_numeric($cssm->getMark()))
                 {   
 
-		    if (($cssm->getMarkNumber() == 2) && ($cssm->getMark() >= 5) )
-		    {  echo "<br><br><br><br> primer nota: ".$cssm->getMark()."<br>";
+		    if ($cssm->getMarkNumber() == 2 && $cssm->getMark() >= 5) 
+		    {  //echo "<br><br><br><br> primer nota: ".$cssm->getMark()."<br>";
 		        $first_mark = true;
 		    }
-		    if (($cssm->getMarkNumber() == 4) && ($cssm->getMark() >= 7) )
-		    {  echo "<br> segunda nota: ".$cssm->getMark()."<br>";
+		    if ($cssm->getMarkNumber() == 4 && $cssm->getMark() >= 7) 
+		    {  //echo "<br> segunda nota: ".$cssm->getMark()."<br>";
 		        $second_mark = true;
 		    }
-
+                  
 		}
-		else {
+		else { //echo "en el else de nota no numerica";
 
-		    if (($cssm->getMark()==”PO”) || ($cssm->getMark()==”PA”) || ($cssm->getMark()==”PE”)) 
+		  
+		    if ($cssm->getMark()=="PO" || $cssm->getMark()=="PA" || $cssm->getMark()=="PE") 
 		    {
 		        $first_mark  = true;
 		        $second_mark = true;
 		    }
+		     
+	           if ($cssm->getMark()=="R") {
 
-		    if ( (($cssm->getMarkNumber() == 5) && ($cssm->getMark()==”MB”)) || (($cssm->getMark() == 5) &&($cssm->getMarkNumber()==”B”)) ) 
+			$regular=true;
+
+		    }
+
+		  if ( ($cssm->getMarkNumber() == 5 && $cssm->getMark()=="MB" && $regular==false) || ($cssm->getMarkNumber() == 5 && $cssm->getMark()=="B" && $regular==false) ) 
 		    {
 		        $first_mark  = true;
 		        $second_mark = true;
+			
 		    }
+		
 		}
 	    }
        
        $average = (($first_mark == true) && ($second_mark == true)) ? $minimum_mark : $minimum_mark -1;
 
-       echo "ya sali<br> $average";
       return $average;
   
     } 

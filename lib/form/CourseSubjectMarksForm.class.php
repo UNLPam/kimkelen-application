@@ -70,7 +70,17 @@ class CourseSubjectMarksForm extends BaseCourseSubjectForm
           {
             $widgets[$widget_name] = new sfWidgetFormPropelChoice(array('model'=> 'LetterMark', 'add_empty' => true, 'default' =>  LetterMark::getPkByValue((Int)$course_subject_student_mark->getMark())));
             $validators[$widget_name] = new sfValidatorPropelChoice(array('model' => 'LetterMark', 'required' => false));
-          }	
+
+}//nueva
+ //$letter_mark = LetterMarkPeer::getLetterMarkByValue((Int)$course_subject_student_mark->getMark()); //esto lo comente
+            
+        /*    if(!is_null($letter_mark)) {
+              $this->setDefault($widget_name, $letter_mark->getId());
+            }
+            $widgets[$widget_name] = new sfWidgetFormPropelChoice(array('model'=> 'LetterMark', 'add_empty' => true));
+            $validators[$widget_name] = new sfValidatorPropelChoice(array('model' => 'LetterMark', 'required' => false));
+    
+          }	*/
 
           //IS FREE
           $free_widget_name = $course_subject_student->getId().'_free_'.$course_subject_student_mark->getMarkNumber();
@@ -79,7 +89,8 @@ class CourseSubjectMarksForm extends BaseCourseSubjectForm
           $widgets[$free_widget_name] = new sfWidgetFormInputCheckbox(array('default' => $course_subject_student_mark->getIsFree()), array('onChange' => "free_mark('$name_free_element','$name');"));
 
 
-          if ($course_subject_student_mark->getIsFree())
+
+         if ($course_subject_student_mark->getIsFree())
           {
             $widgets[$widget_name]->setAttribute('style', 'display:none');
           }
@@ -121,6 +132,7 @@ class CourseSubjectMarksForm extends BaseCourseSubjectForm
   {
     $values = $this->getValues();
 
+
     $c = new Criteria();
     $c->add(CourseSubjectStudentMarkPeer::IS_CLOSED, false);
     foreach ($this->object->getCourseSubjectStudents() as $course_subject_student)
@@ -129,20 +141,30 @@ class CourseSubjectMarksForm extends BaseCourseSubjectForm
       {
         $is_free = $values[$course_subject_student->getId() . '_free_' . $course_subject_student_mark->getMarkNumber()];
         $value = $values[$course_subject_student->getId() . '_' . $course_subject_student_mark->getMarkNumber()];
+ 
+
         if ((!is_null($is_free)))
-        {
+        { 
           if (($is_free) || ($value == null))
           {
-            $value = 0;
+            $value = 0; 
           }
-	  //else
-          //{
-           // $value = LetterMarkPeer::retrieveByPk($value)->getValue();
-          //}
+	  else
+          {
+            if($value != null)
+            {
+              if (!$course_subject_student->getConfiguration()->isNumericalMark())
+              {
+                $value = LetterMarkPeer::retrieveByPk($value)->getValue();
+              }
+            }
+          }
+
 
           $course_subject_student_mark->setMark($value);
           $course_subject_student_mark->setIsFree($is_free);
           $course_subject_student_mark->save($con);
+
         }
       }
     }

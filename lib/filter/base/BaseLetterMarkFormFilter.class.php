@@ -20,7 +20,7 @@ class BaseLetterMarkFormFilter extends BaseFormFilterPropel
 
     $this->setValidators(array(
       'letter' => new sfValidatorPass(array('required' => false)),
-      'value'  => new sfValidatorSchemaFilter('text', new sfValidatorInteger(array('required' => false))),
+      'value'  => new sfValidatorPass(array('required' => false)),
     ));
 
     $this->widgetSchema->setNameFormat('letter_mark_filters[%s]');
@@ -40,7 +40,7 @@ class BaseLetterMarkFormFilter extends BaseFormFilterPropel
     return array(
       'id'     => 'Number',
       'letter' => 'Text',
-      'value'  => 'Number',
+      'value'  => 'Text',
     );
   }
 }
